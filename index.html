@@ -83,9 +83,9 @@
       </div>
     </div>
 
-    <!-- Setningsfeltet vises først når ordet er stavet riktig -->
+    <!-- Setningsfeltet vises bare første gang hvert ord er riktig -->
     <div id="sentenceWrap" class="sentence-wrap row">
-      <label for="sentence" class="small" style="min-width:100%">Skriv en valgfri setning (minst 5 ord og den må inneholde ordet):</label>
+      <label for="sentence" class="small" style="min-width:100%">Skriv en setning (minst 5 ord og den må inneholde ordet):</label>
       <textarea id="sentence" rows="2" placeholder="Skriv setningen din her…"></textarea>
       <button id="checkSentence" class="btn ok">Sjekk setning</button>
       <div id="sentStatus" class="status small" aria-live="polite"></div>
@@ -100,14 +100,12 @@
     </div>
 
     <div class="note small" style="margin-top:10px">
-      Tips: Trykk 🔊 for å høre ordet på nytt. Ordet vises aldri på skjermen.
+      Tips: Trykk 🔊 for å høre ordet på nytt. Ordet vises aldri på skjermen. Hvert ord trenger bare én setning totalt.
     </div>
   </div>
 
 <script>
-/* === KONFIG ===
- * Ukas ord (vises aldri på skjermen):
- */
+/* === KONFIG === */
 const WORDS = ["Paranoia", "Dinosaur", "Øyeblikk", "Leilighet"];
 const GOAL_POINTS = 16;
 
@@ -126,10 +124,11 @@ goalEl.textContent = GOAL_POINTS;
 
 let points = 0;
 let currentWord = null;
-let voices = [];
 let nbVoice = null;
-let wordJustAwarded = false; // hindrer dobbel-poeng for samme ord
-let sentenceLoggedForCurrentWord = false;
+let wordJustAwarded = false;
+
+// lagrer første godkjente setning per ord (nøkkel = normalisert ord)
+const sentencesByWord = Object.create(null);
 
 function randomWord(){
   currentWord = WORDS[Math.floor(Math.random() * WORDS.length)];
@@ -153,8 +152,9 @@ function setEnabled(on){
   if(on){ input.focus(); }
 }
 
-function chooseNorwegianVoice(all){
-  const by = (test) => all.find(v => test(v));
+function chooseNorwegianVoice(){
+  const all = window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
+  const by = (t) => all.find(v => t(v));
   return (
     by(v => /nb|no/i.test(v.lang) && /Google/i.test(v.name)) ||
     by(v => /nb|no/i.test(v.lang) && /Microsoft/i.test(v.name)) ||
@@ -163,7 +163,6 @@ function chooseNorwegianVoice(all){
   );
 }
 
-// Sier to setninger i rekkefølge for mer naturlig rytme
 function speakSequence(parts){
   if(!("speechSynthesis" in window)) return;
   window.speechSynthesis.cancel();
@@ -187,11 +186,12 @@ function promptWord(){
 }
 
 function start(){
-  points = 0; wordJustAwarded = false; sentenceLoggedForCurrentWord = false;
+  points = 0; wordJustAwarded = false;
+  for(const k in sentencesByWord) delete sentencesByWord[k]; // ny økt
   pointsEl.textContent = points;
   statusEl.textContent = ""; goalMsg.style.display = "none";
+  sentenceLog.innerHTML = "";
   updateBar();
-  sentenceLog.innerHTML = ""; // Ny økt: tom logg
   randomWord();
   setEnabled(true);
   promptWord();
@@ -200,20 +200,31 @@ function start(){
 function checkWord(){
   if(!currentWord) return;
   const correct = norm(input.value) === norm(currentWord) && currentWord.length > 0;
-  if(correct){
-    if(!wordJustAwarded){
-      points += 1; wordJustAwarded = true;
-      pointsEl.textContent = points; updateBar();
-      if(points >= GOAL_POINTS){ goalMsg.style.display = "block"; }
-    }
+  if(!correct){
+    statusEl.className = "status err";
+    statusEl.textContent = "Ikke helt riktig. Prøv igjen.";
+    return;
+  }
+
+  if(!wordJustAwarded){
+    points += 1; wordJustAwarded = true;
+    pointsEl.textContent = points; updateBar();
+    if(points >= GOAL_POINTS){ goalMsg.style.display = "block"; }
+  }
+
+  const key = norm(currentWord);
+  if(sentencesByWord[key]){
+    // Setning finnes allerede for dette ordet – hopp over setningssteget
     statusEl.className = "status ok";
-    statusEl.textContent = "Riktig stavet! Skriv en setning.";
+    statusEl.textContent = "Riktig! Setning for dette ordet er allerede skrevet.";
+    nextBtn.disabled = false;
+    checkBtn.disabled = true;
+  }else{
+    statusEl.className = "status ok";
+    statusEl.textContent = "Riktig stavet! Skriv en setning (minst 5 ord) som inneholder ordet.";
     sentenceWrap.style.display = "flex";
     sentenceInput.focus();
     checkBtn.disabled = true; // lås ordet til setning er godkjent
-  }else{
-    statusEl.className = "status err";
-    statusEl.textContent = "Ikke helt riktig. Prøv igjen.";
   }
 }
 
@@ -231,7 +242,9 @@ function appendSentenceToLog(sentenceText){
 function checkSentence(){
   const txt = sentenceInput.value;
   const n = countWords(txt);
-  const containsWord = norm(txt).includes(norm(currentWord||""));
+  const key = norm(currentWord||"");
+  const containsWord = norm(txt).includes(key);
+
   if(n < 5){
     sentStatus.className = "status err small";
     sentStatus.textContent = "For kort. Skriv minst fem ord.";
@@ -244,26 +257,25 @@ function checkSentence(){
     nextBtn.disabled = true;
     return;
   }
+
+  // Godkjent – lagre kun første setning per ord
+  if(!sentencesByWord[key]){
+    sentencesByWord[key] = txt.trim();
+    appendSentenceToLog(sentencesByWord[key]);
+  }
   sentStatus.className = "status ok small";
   sentStatus.textContent = "Godkjent setning!";
   nextBtn.disabled = false;
   sentenceInput.blur();
-
-  if(!sentenceLoggedForCurrentWord){
-    appendSentenceToLog(txt);
-    sentenceLoggedForCurrentWord = true;
-  }
 }
 
 function next(){
-  // Ikke fjern loggen – bare gå videre til nytt ord
   input.value = ""; statusEl.textContent = "";
   sentenceInput.value = ""; sentStatus.textContent = "";
   sentenceWrap.style.display = "none";
   wordJustAwarded = false;
-  sentenceLoggedForCurrentWord = false;
-  randomWord();
   checkBtn.disabled = false; nextBtn.disabled = true;
+  randomWord();
   input.focus();
   promptWord();
 }
@@ -273,18 +285,15 @@ function resetAll(){
   points = 0; pointsEl.textContent = points; updateBar();
   currentWord = null; input.value = ""; statusEl.textContent = ""; goalMsg.style.display = "none";
   sentenceInput.value = ""; sentStatus.textContent = ""; sentenceWrap.style.display = "none";
-  sentenceLog.innerHTML = ""; // Reset fjerner logg for ny økt
+  sentenceLog.innerHTML = "";
+  for(const k in sentencesByWord) delete sentencesByWord[k];
   setEnabled(false);
 }
 
 // Stemmer
-function loadVoices(){
-  voices = window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
-  nbVoice = chooseNorwegianVoice(voices);
-}
 if("speechSynthesis" in window){
-  loadVoices();
-  window.speechSynthesis.onvoiceschanged = loadVoices;
+  nbVoice = chooseNorwegianVoice();
+  window.speechSynthesis.onvoiceschanged = ()=>{ nbVoice = chooseNorwegianVoice(); };
 }
 
 /* === LYTTERE === */
