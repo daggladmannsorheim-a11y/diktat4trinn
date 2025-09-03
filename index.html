@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Diktat – 4. trinn på Karlsrud skole (Uke 36)</title>
+<style>
+  :root{
+    --bg:#0b1020; --panel:#0f172a; --text:#e5e7eb; --muted:#9aa3b2;
+    --ok:#22c55e; --warn:#f59e0b; --err:#ef4444; --ring:#334155; --bar:#1f2937;
+  }
+  *{box-sizing:border-box} html,body{height:100%}
+  body{
+    margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Ubuntu,Arial,sans-serif;
+    background:radial-gradient(1200px 500px at 50% -20%, #1e293b33, transparent 50%), var(--bg);
+    color:var(--text); display:flex; align-items:center; justify-content:center; padding:24px
+  }
+  .card{width:min(820px,100%); background:var(--panel); border:1px solid #1f2937; border-radius:20px; padding:22px; box-shadow:0 10px 30px #0006}
+  h1{font-size:1.25rem; margin:0 0 6px}
+  .sub{color:var(--muted); font-size:.95rem; margin-bottom:18px}
+  .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+  .btn{appearance:none; border:1px solid #223047; background:#111827; color:var(--text); padding:10px 14px; border-radius:12px; cursor:pointer; font-weight:600}
+  .btn:disabled{opacity:.5; cursor:not-allowed}
+  .primary{background:#1f2937; border-color:#2b3a55}
+  .ok{background:#12351f; border-color:#245a37}
+  .warn{background:#3a2a10; border-color:#6b4d1a}
+  input[type="text"], textarea{
+    flex:1 1 280px; padding:12px 14px; border-radius:12px; border:1px solid #223047;
+    background:#0b1222; color:var(--text); outline:none; resize:vertical
+  }
+  input[type="text"]:focus, textarea:focus{box-shadow:0 0 0 3px var(--ring)}
+  .status{min-height:28px; margin-top:8px; font-weight:600}
+  .status.ok{color:var(--ok)} .status.err{color:var(--err)}
+  .progress{height:12px; background:var(--bar); border-radius:999px; overflow:hidden; border:1px solid #223047}
+  .progress>span{display:block; height:100%; background:linear-gradient(90deg,#22c55e,#a3e635); width:0%}
+  .meta{display:flex; justify-content:space-between; align-items:center; margin:12px 0 10px}
+  .small{font-size:.9rem; color:var(--muted)}
+  .chips{display:flex; gap:6px}
+  .chip{border:1px dashed #334155; color:#cbd5e1; background:#0b1222; padding:6px 9px; border-radius:10px; cursor:pointer; user-select:none}
+  .big{font-size:1.6rem; margin:10px 0 2px}
+  .sentence-wrap{display:none; gap:10px; margin-top:8px}
+  .note{font-size:.9rem; color:#cbd5e1}
+  .log{margin-top:16px; border-top:1px dashed #334155; padding-top:10px}
+  .loglist{margin:8px 0 0 1rem; padding:0}
+  .loglist li{margin:4px 0}
+</style>
+</head>
+<body>
+  <div class="card" role="application" aria-label="Diktat – Uke 36">
+    <h1>4. trinn på Karlsrud skole, verdens beste trinn</h1>
+    <div class="sub">Diktat – Uke 36. Poengmål: <strong id="goal">16</strong>.</div>
+
+    <div class="meta">
+      <div class="small">Poeng: <strong id="points">0</strong> / <strong>16</strong></div>
+      <div class="small">Fremdrift</div>
+    </div>
+    <div class="progress" aria-label="Fremdrift mot mål">
+      <span id="bar" style="width:0%"></span>
+    </div>
+
+    <div class="row" style="margin-top:14px">
+      <button id="start" class="btn primary">Start</button>
+      <button id="repeat" class="btn" disabled title="Spill av ordet på nytt">🔊 Spill av igjen</button>
+      <button id="reset" class="btn" title="Nullstill alt">Nullstill</button>
+    </div>
+
+    <div class="row" style="margin-top:10px">
+      <label for="answer" class="small" style="min-width:100%">Skriv ordet her (Enter for å sjekke):</label>
+      <input id="answer" type="text" inputmode="latin" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="Skriv ordet…" disabled />
+      <button id="check" class="btn ok" disabled>Sjekk ord</button>
+      <button id="next" class="btn warn" disabled>Neste</button>
+    </div>
+
+    <div class="row small" style="margin-top:6px">
+      <div>Spesialtegn:</div>
+      <div class="chips" aria-label="Norske bokstaver">
+        <span class="chip" data-char="æ">æ</span>
+        <span class="chip" data-char="ø">ø</span>
+        <span class="chip" data-char="å">å</span>
+        <span class="chip" data-char="Æ">Æ</span>
+        <span class="chip" data-char="Ø">Ø</span>
+        <span class="chip" data-char="Å">Å</span>
+      </div>
+    </div>
+
+    <!-- Setningsfeltet vises først når ordet er stavet riktig -->
+    <div id="sentenceWrap" class="sentence-wrap row">
+      <label for="sentence" class="small" style="min-width:100%">Skriv en valgfri setning (minst 5 ord og den må inneholde ordet):</label>
+      <textarea id="sentence" rows="2" placeholder="Skriv setningen din her…"></textarea>
+      <button id="checkSentence" class="btn ok">Sjekk setning</button>
+      <div id="sentStatus" class="status small" aria-live="polite"></div>
+    </div>
+
+    <div id="status" class="status" aria-live="polite"></div>
+    <div id="goalMsg" class="big" style="display:none;">🎉 Mål nådd! 16 poeng</div>
+
+    <div class="log">
+      <div class="small">Setninger skrevet:</div>
+      <ol id="sentenceLog" class="loglist" aria-live="polite" aria-label="Liste over setninger"></ol>
+    </div>
+
+    <div class="note small" style="margin-top:10px">
+      Tips: Trykk 🔊 for å høre ordet på nytt. Ordet vises aldri på skjermen.
+    </div>
+  </div>
+
+<script>
+/* === KONFIG ===
+ * Ukas ord (vises aldri på skjermen):
+ */
+const WORDS = ["Paranoia", "Dinosaur", "Øyeblikk", "Leilighet"];
+const GOAL_POINTS = 16;
+
+/* === HJELPERE === */
+const $ = (id) => document.getElementById(id);
+const pointsEl = $("points"), goalEl = $("goal"), barEl = $("bar");
+const startBtn = $("start"), repeatBtn = $("repeat"), resetBtn = $("reset");
+const input = $("answer"), checkBtn = $("check"), nextBtn = $("next");
+const statusEl = $("status"), goalMsg = $("goalMsg");
+
+const sentenceWrap = $("sentenceWrap"), sentenceInput = $("sentence"),
+      checkSentenceBtn = $("checkSentence"), sentStatus = $("sentStatus"),
+      sentenceLog = $("sentenceLog");
+
+goalEl.textContent = GOAL_POINTS;
+
+let points = 0;
+let currentWord = null;
+let voices = [];
+let nbVoice = null;
+let wordJustAwarded = false; // hindrer dobbel-poeng for samme ord
+let sentenceLoggedForCurrentWord = false;
+
+function randomWord(){
+  currentWord = WORDS[Math.floor(Math.random() * WORDS.length)];
+}
+
+function norm(s){ return s.trim().toLocaleLowerCase('nb'); }
+
+function updateBar(){
+  const pct = Math.max(0, Math.min(100, (points/GOAL_POINTS)*100));
+  barEl.style.width = pct + "%";
+}
+
+function setEnabled(on){
+  input.disabled = !on;
+  checkBtn.disabled = !on;
+  repeatBtn.disabled = !on;
+  nextBtn.disabled = true;
+  sentenceWrap.style.display = "none";
+  sentenceInput.value = "";
+  sentStatus.textContent = "";
+  if(on){ input.focus(); }
+}
+
+function chooseNorwegianVoice(all){
+  const by = (test) => all.find(v => test(v));
+  return (
+    by(v => /nb|no/i.test(v.lang) && /Google/i.test(v.name)) ||
+    by(v => /nb|no/i.test(v.lang) && /Microsoft/i.test(v.name)) ||
+    by(v => /^nb|^no/i.test(v.lang)) ||
+    null
+  );
+}
+
+// Sier to setninger i rekkefølge for mer naturlig rytme
+function speakSequence(parts){
+  if(!("speechSynthesis" in window)) return;
+  window.speechSynthesis.cancel();
+  parts.forEach(p => {
+    const u = new SpeechSynthesisUtterance(p.text);
+    if(nbVoice) u.voice = nbVoice;
+    u.lang = nbVoice?.lang || "nb-NO";
+    u.rate = p.rate ?? 0.92;
+    u.pitch = 1.0;
+    u.volume = 1.0;
+    window.speechSynthesis.speak(u);
+  });
+}
+
+function promptWord(){
+  if(!currentWord || !("speechSynthesis" in window)) return;
+  speakSequence([
+    {text: currentWord + ".", rate: 0.86},
+    {text: "Skriv " + currentWord + ".", rate: 0.94}
+  ]);
+}
+
+function start(){
+  points = 0; wordJustAwarded = false; sentenceLoggedForCurrentWord = false;
+  pointsEl.textContent = points;
+  statusEl.textContent = ""; goalMsg.style.display = "none";
+  updateBar();
+  sentenceLog.innerHTML = ""; // Ny økt: tom logg
+  randomWord();
+  setEnabled(true);
+  promptWord();
+}
+
+function checkWord(){
+  if(!currentWord) return;
+  const correct = norm(input.value) === norm(currentWord) && currentWord.length > 0;
+  if(correct){
+    if(!wordJustAwarded){
+      points += 1; wordJustAwarded = true;
+      pointsEl.textContent = points; updateBar();
+      if(points >= GOAL_POINTS){ goalMsg.style.display = "block"; }
+    }
+    statusEl.className = "status ok";
+    statusEl.textContent = "Riktig stavet! Skriv en setning.";
+    sentenceWrap.style.display = "flex";
+    sentenceInput.focus();
+    checkBtn.disabled = true; // lås ordet til setning er godkjent
+  }else{
+    statusEl.className = "status err";
+    statusEl.textContent = "Ikke helt riktig. Prøv igjen.";
+  }
+}
+
+function countWords(txt){
+  const m = txt.trim().match(/\p{L}[\p{L}\p{N}'-]*/gu);
+  return m ? m.length : 0;
+}
+
+function appendSentenceToLog(sentenceText){
+  const li = document.createElement("li");
+  li.textContent = sentenceText.trim();
+  sentenceLog.appendChild(li);
+}
+
+function checkSentence(){
+  const txt = sentenceInput.value;
+  const n = countWords(txt);
+  const containsWord = norm(txt).includes(norm(currentWord||""));
+  if(n < 5){
+    sentStatus.className = "status err small";
+    sentStatus.textContent = "For kort. Skriv minst fem ord.";
+    nextBtn.disabled = true;
+    return;
+  }
+  if(!containsWord){
+    sentStatus.className = "status err small";
+    sentStatus.textContent = "Setningen må inneholde ordet.";
+    nextBtn.disabled = true;
+    return;
+  }
+  sentStatus.className = "status ok small";
+  sentStatus.textContent = "Godkjent setning!";
+  nextBtn.disabled = false;
+  sentenceInput.blur();
+
+  if(!sentenceLoggedForCurrentWord){
+    appendSentenceToLog(txt);
+    sentenceLoggedForCurrentWord = true;
+  }
+}
+
+function next(){
+  // Ikke fjern loggen – bare gå videre til nytt ord
+  input.value = ""; statusEl.textContent = "";
+  sentenceInput.value = ""; sentStatus.textContent = "";
+  sentenceWrap.style.display = "none";
+  wordJustAwarded = false;
+  sentenceLoggedForCurrentWord = false;
+  randomWord();
+  checkBtn.disabled = false; nextBtn.disabled = true;
+  input.focus();
+  promptWord();
+}
+
+function resetAll(){
+  window.speechSynthesis && window.speechSynthesis.cancel();
+  points = 0; pointsEl.textContent = points; updateBar();
+  currentWord = null; input.value = ""; statusEl.textContent = ""; goalMsg.style.display = "none";
+  sentenceInput.value = ""; sentStatus.textContent = ""; sentenceWrap.style.display = "none";
+  sentenceLog.innerHTML = ""; // Reset fjerner logg for ny økt
+  setEnabled(false);
+}
+
+// Stemmer
+function loadVoices(){
+  voices = window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
+  nbVoice = chooseNorwegianVoice(voices);
+}
+if("speechSynthesis" in window){
+  loadVoices();
+  window.speechSynthesis.onvoiceschanged = loadVoices;
+}
+
+/* === LYTTERE === */
+startBtn.addEventListener("click", start);
+repeatBtn.addEventListener("click", promptWord);
+resetBtn.addEventListener("click", resetAll);
+checkBtn.addEventListener("click", checkWord);
+nextBtn.addEventListener("click", next);
+input.addEventListener("keydown", (e)=>{ if(e.key === "Enter" && !checkBtn.disabled){ checkWord(); } });
+checkSentenceBtn.addEventListener("click", checkSentence);
+sentenceInput.addEventListener("keydown", (e)=>{ if(e.key === "Enter"){ e.preventDefault(); checkSentence(); } });
+
+// Norske bokstav-knapper: skriver i aktivt felt
+document.querySelectorAll(".chip[data-char]").forEach(ch=>{
+  ch.addEventListener("click", ()=>{
+    const inSentence = sentenceWrap.style.display==="flex";
+    if(input.disabled && !inSentence) return;
+    const target = inSentence ? sentenceInput : input;
+    const c = ch.getAttribute("data-char");
+    const {selectionStart:s, selectionEnd:e, value:v} = target;
+    target.value = v.slice(0,s) + c + v.slice(e);
+    const caret = s + c.length;
+    target.focus();
+    target.setSelectionRange(caret, caret);
+  });
+});
+
+// Start i ventemodus
+setEnabled(false);
+</script>
+</body>
+</html>
