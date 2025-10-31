@@ -2,34 +2,39 @@
 <html lang="nb">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="screen-orientation" content="landscape">
 <title>Snake – Gloser uke 45 (Kampen 6. trinn)</title>
 <style>
 :root{
   --bg:#0c1020;--panel:#151a2b;--ink:#eef3fb;--muted:#9fb1d1;
   --line:#223059;--good:#42d392;--bad:#ff6b6b;--apple:#ff5a5a;
 }
-*{box-sizing:border-box}html,body{margin:0;height:100%;background:#0c1020;color:var(--ink);font:16px system-ui,Segoe UI,Roboto,Arial}
-header{position:sticky;top:0;background:rgba(21,26,43,.95);border-bottom:1px solid var(--line);padding:10px 14px}
+*{box-sizing:border-box}html,body{margin:0;height:100%;background:#0c1020;color:var(--ink);font:16px system-ui,Segoe UI,Roboto,Arial;overflow:hidden}
+header{position:sticky;top:0;background:rgba(21,26,43,.95);border-bottom:1px solid var(--line);padding:8px 14px;text-align:center}
 h1{margin:0;font-size:18px}.muted{color:var(--muted)}
-.wrap{max-width:960px;margin:10px auto;padding:10px}
-.grid{display:grid;grid-template-columns:1fr 330px;gap:12px}@media(max-width:900px){.grid{grid-template-columns:1fr}}
-#canvasWrap{background:radial-gradient(1000px 480px at 30% -8%,#18234a,#0c1020 60%);border:1px solid var(--line);border-radius:12px;padding:8px}
+.wrap{max-width:960px;margin:auto;padding:6px}
+#canvasWrap{background:radial-gradient(1000px 480px at 30% -8%,#18234a,#0c1020 60%);
+  border:1px solid var(--line);border-radius:12px;padding:6px;margin:auto}
 canvas{display:block;width:100%;height:auto;background:#0a1020;border:1px solid #1b274b;border-radius:10px;touch-action:none}
-#ui{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px}
-.chip{display:inline-flex;gap:6px;align-items:center;background:#1a2240;border:1px solid var(--line);border-radius:999px;padding:4px 10px;margin:4px 6px 0 0}
-button{appearance:none;background:#1b274b;color:var(--ink);border:1px solid var(--line);padding:10px 12px;border-radius:10px;font-weight:700}
+#mobControls{display:grid;place-items:center;margin-top:8px}
+#mobControls .row{display:flex;gap:14px;justify-content:center;margin-top:6px}
+#mobControls button{width:70px;height:70px;font-size:30px;border-radius:14px;
+  background:#1a274b;color:#fff;border:1px solid #223059;}
+#mobControls button:active{transform:scale(.95)}
+@media(min-width:900px){#mobControls{display:none}} /* Skjul på PC */
+#ui{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px;text-align:center;margin-top:8px}
+.chip{display:inline-flex;gap:6px;align-items:center;background:#1a2240;border:1px solid var(--line);border-radius:999px;padding:4px 10px;margin:2px 3px;font-size:15px}
+button{appearance:none;background:#1b274b;color:var(--ink);border:1px solid var(--line);padding:8px 12px;border-radius:10px;font-weight:700;font-size:15px}
 button:active{transform:translateY(1px)}.btn-prim{background:#1b3b2e;border-color:#225a42}
-label.pill{display:inline-flex;gap:8px;align-items:center;background:#1a2240;border:1px solid var(--line);border-radius:999px;padding:6px 10px}
-input[type=range]{accent-color:#42d392}
 /* Modal */
 #modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:50}
 #card{width:min(92vw,460px);background:#0f1734;border:1px solid #2a3a68;border-radius:14px;padding:14px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
 #ans{width:100%;padding:12px 14px;font-size:18px;border-radius:10px;border:1px solid #2a3a68;background:#101833;color:#fff}
-.row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;justify-content:center}
 .good{color:var(--good)}.bad{color:var(--bad)}
-#fasitWrap{margin-top:20px}
-table{width:100%;border-collapse:collapse;font-size:15px}
+#fasitWrap{margin-top:12px;text-align:center}
+table{width:100%;border-collapse:collapse;font-size:15px;margin-top:6px}
 th,td{border:1px solid #2a3a68;padding:6px 8px;text-align:left}
 th{background:#1a2240}
 </style>
@@ -37,35 +42,44 @@ th{background:#1a2240}
 <body>
 <header>
   <h1>Snake – Gloser • Uke 45</h1>
-  <div class="muted">Sveip med fingeren eller bruk piltaster. Spis 🍎 → svar på spørsmål for å vokse.</div>
+  <div class="muted">Spis 🍎 for spørsmål. Svar riktig for å vokse – fungerer på mobil og PC!</div>
 </header>
 
-<div class="wrap grid">
-  <div id="canvasWrap"><canvas id="game" width="720" height="480"></canvas></div>
-  <aside id="ui">
-    <div>
-      <span class="chip">Poeng: <b id="score">0</b></span>
-      <span class="chip">Liv: <b id="lives">❤❤❤</b></span>
-      <span class="chip">Fart: <b id="speedShow">7</b></span>
-      <span class="chip">Topp: <b id="best">0</b></span>
-    </div>
-    <div class="row">
-      <button id="start" class="btn-prim">Start / Restart</button>
-      <button id="pause">Pause</button>
-      <label class="pill">Fart <input id="speed" type="range" min="4" max="16" value="7"></label>
-    </div>
-  </aside>
+<div class="wrap" id="canvasWrap">
+  <canvas id="game" width="720" height="480"></canvas>
 </div>
 
+<!-- Mobil piltaster -->
+<div id="mobControls">
+  <div class="row"><button id="up">⬆️</button></div>
+  <div class="row">
+    <button id="left">⬅️</button>
+    <button id="down">⬇️</button>
+    <button id="right">➡️</button>
+  </div>
+</div>
+
+<!-- Info -->
+<div id="ui">
+  <span class="chip">Poeng: <b id="score">0</b></span>
+  <span class="chip">Liv: <b id="lives">❤❤❤</b></span>
+  <span class="chip">Fart: <b id="speedShow">7</b></span>
+  <span class="chip">Topp: <b id="best">0</b></span><br>
+  <button id="start" class="btn-prim">Start / Restart</button>
+  <button id="pause">Pause</button>
+  <input id="speed" type="range" min="4" max="16" value="7" style="vertical-align:middle">
+</div>
+
+<!-- Fasit -->
 <div id="fasitWrap" class="wrap">
   <button id="toggleFasit" class="btn-prim">Vis fasit ▼</button>
-  <div id="fasit" style="display:none;margin-top:10px"></div>
+  <div id="fasit" style="display:none"></div>
 </div>
 
-<!-- Spørsmål -->
+<!-- Modal -->
 <div id="modal">
   <div id="card">
-    <p id="qtxt">Skriv engelsk for: <span id="norw" class="good"></span></p>
+    <p>Skriv engelsk for: <span id="norw" class="good"></span></p>
     <input id="ans" type="text" inputmode="latin" autocomplete="off" autocapitalize="none" spellcheck="false">
     <div class="row">
       <button id="check" class="btn-prim">Sjekk</button>
@@ -88,140 +102,128 @@ const PAIRS=[
  {en:"Whips out",no:"trekker frem"},
  {en:"Knickers",no:"underbukser"}
 ];
-/* --- Fasit-tabell --- */
-const fasitDiv=document.getElementById("fasit");
-fasitDiv.innerHTML=`<table><tr><th>Engelsk</th><th>Norsk</th></tr>${
-  PAIRS.map(p=>`<tr><td>${p.en}</td><td>${p.no}</td></tr>`).join("")
-}</table>`;
+/* Fasit-tabell */
+const f=document.getElementById("fasit");
+f.innerHTML=`<table><tr><th>Engelsk</th><th>Norsk</th></tr>${PAIRS.map(p=>`<tr><td>${p.en}</td><td>${p.no}</td></tr>`).join("")}</table>`;
 document.getElementById("toggleFasit").onclick=()=>{
-  const f=fasitDiv.style.display==="none";
-  fasitDiv.style.display=f?"block":"none";
-  event.target.textContent=f?"Skjul fasit ▲":"Vis fasit ▼";
+ const open=f.style.display==="none";f.style.display=open?"block":"none";
+ event.target.textContent=open?"Skjul fasit ▲":"Vis fasit ▼";
 };
 
 /* --- DOM --- */
 const cv=document.getElementById('game'),ctx=cv.getContext('2d');
-const ui={
-  score:document.getElementById('score'),lives:document.getElementById('lives'),
-  best:document.getElementById('best'),speed:document.getElementById('speed'),
-  speedShow:document.getElementById('speedShow'),start:document.getElementById('start'),
-  pause:document.getElementById('pause')
-};
+const ui={score:score=lives=best=speed=speedShow=start=pause=null};
+ui.score=document.getElementById('score');ui.lives=document.getElementById('lives');
+ui.best=document.getElementById('best');ui.speed=document.getElementById('speed');
+ui.speedShow=document.getElementById('speedShow');ui.start=document.getElementById('start');
+ui.pause=document.getElementById('pause');
 const modal=document.getElementById('modal'),norw=document.getElementById('norw'),
 ans=document.getElementById('ans'),checkBtn=document.getElementById('check'),skipBtn=document.getElementById('skip');
 const LS_KEY="snake45_best";
 ui.best.textContent=localStorage.getItem(LS_KEY)||0;
 
-/* --- Canvas --- */
+/* --- Canvas resize --- */
 let grid=24,cols=Math.floor(cv.width/grid),rows=Math.floor(cv.height/grid);
 function fit(){const r=cv.getBoundingClientRect(),ratio=window.devicePixelRatio||1;
-  const w=Math.floor(r.width*ratio),h=Math.floor(w*2/3);
-  if(cv.width!==w||cv.height!==h){cv.width=w;cv.height=h;cols=Math.floor(w/grid);rows=Math.floor(h/grid);}
+ const w=Math.floor(r.width*ratio),h=Math.floor(w*2/3);
+ if(cv.width!==w||cv.height!==h){cv.width=w;cv.height=h;cols=Math.floor(w/grid);rows=Math.floor(h/grid);}
 }
 window.addEventListener('resize',fit);
 
-/* --- Utils --- */
+/* --- Helpers --- */
 const rand=n=>Math.floor(Math.random()*n);
 const norm=s=>s.trim().toLowerCase().replace(/\s+/g," ");
 function flash(msg,ok=true,t=900){
-  const e=document.createElement('div');e.textContent=msg;
-  e.style.position="fixed";e.style.left="50%";e.style.top="12px";e.style.transform="translateX(-50%)";
-  e.style.background=ok?"#1f503a":"#5b2230";e.style.color="#fff";e.style.padding="10px 14px";
-  e.style.borderRadius="10px";e.style.border="1px solid rgba(255,255,255,.15)";e.style.zIndex=99;
-  document.body.appendChild(e);setTimeout(()=>e.remove(),t);
+ const e=document.createElement('div');e.textContent=msg;
+ e.style.position="fixed";e.style.left="50%";e.style.top="12px";e.style.transform="translateX(-50%)";
+ e.style.background=ok?"#1f503a":"#5b2230";e.style.color="#fff";e.style.padding="10px 14px";
+ e.style.borderRadius="10px";e.style.border="1px solid rgba(255,255,255,.15)";e.style.zIndex=99;
+ document.body.appendChild(e);setTimeout(()=>e.remove(),t);
 }
 
 /* --- Game state --- */
-let snake,dir,nextDir,apple,score,lives,paused=true,loopId=null,lastTick=0,speedMs=1000/7;
-let growth=0,current=null;
+let snake,dir,nextDir,apple,scoreVal,livesVal,paused=true,loopId=null,lastTick=0,speedMs=1000/7,growth=0,current=null;
 
-/* --- Reset --- */
+/* --- Start/reset --- */
 function freeCell(){let x,y;do{x=rand(cols);y=rand(rows);}while(snake.some(s=>s.x===x&&s.y===y));return{x,y};}
 function placeApple(){apple=freeCell();}
 function reset(){
-  fit();snake=[{x:Math.floor(cols/2),y:Math.floor(rows/2)}];
-  dir={x:1,y:0};nextDir={x:1,y:0};score=0;lives=3;growth=0;
-  ui.score.textContent=score;ui.lives.textContent="❤❤❤";
-  placeApple();paused=false;cancelAnimationFrame(loopId);draw();loopId=requestAnimationFrame(tick);
+ fit();snake=[{x:Math.floor(cols/2),y:Math.floor(rows/2)}];
+ dir={x:1,y:0};nextDir={x:1,y:0};scoreVal=0;livesVal=3;growth=0;
+ ui.score.textContent=scoreVal;ui.lives.textContent="❤❤❤";
+ placeApple();paused=false;cancelAnimationFrame(loopId);draw();loopId=requestAnimationFrame(tick);
 }
 
-/* --- Draw --- */
+/* --- Drawing --- */
 function draw(){
-  ctx.fillStyle="#0a1020";ctx.fillRect(0,0,cv.width,cv.height);
-  ctx.strokeStyle="rgba(34,48,89,.6)";
-  for(let i=0;i<=cols;i++){ctx.beginPath();ctx.moveTo(i*grid,0);ctx.lineTo(i*grid,cv.height);ctx.stroke();}
-  for(let j=0;j<=rows;j++){ctx.beginPath();ctx.moveTo(0,j*grid);ctx.lineTo(cv.width,j*grid);ctx.stroke();}
-  // apple
-  if(apple){ctx.font="bold 14px system-ui";ctx.textAlign="center";ctx.textBaseline="middle";
-    ctx.fillText("🍎",apple.x*grid+grid/2,apple.y*grid+grid/2);}
-  // snake
-  ctx.fillStyle="#79c8ff";
-  snake.forEach((s,i)=>{
-    const x=s.x*grid,y=s.y*grid;ctx.fillRect(x+2,y+2,grid-4,grid-4);
-    if(i===0){ctx.fillStyle="#0b1020";ctx.fillRect(x+6,y+8,3,3);ctx.fillRect(x+grid-9,y+8,3,3);ctx.fillStyle="#79c8ff";}
-  });
+ ctx.fillStyle="#0a1020";ctx.fillRect(0,0,cv.width,cv.height);
+ ctx.strokeStyle="rgba(34,48,89,.6)";
+ for(let i=0;i<=cols;i++){ctx.beginPath();ctx.moveTo(i*grid,0);ctx.lineTo(i*grid,cv.height);ctx.stroke();}
+ for(let j=0;j<=rows;j++){ctx.beginPath();ctx.moveTo(0,j*grid);ctx.lineTo(cv.width,j*grid);ctx.stroke();}
+ if(apple){ctx.font="bold 14px system-ui";ctx.textAlign="center";ctx.textBaseline="middle";
+  ctx.fillText("🍎",apple.x*grid+grid/2,apple.y*grid+grid/2);}
+ ctx.fillStyle="#79c8ff";
+ snake.forEach((s,i)=>{
+   const x=s.x*grid,y=s.y*grid;
+   ctx.fillRect(x+2,y+2,grid-4,grid-4);
+   if(i===0){ctx.fillStyle="#0b1020";ctx.fillRect(x+6,y+8,3,3);ctx.fillRect(x+grid-9,y+8,3,3);ctx.fillStyle="#79c8ff";}
+ });
 }
 
 /* --- Loop --- */
 function tick(ts){
-  fit();if(paused){draw();loopId=requestAnimationFrame(tick);return;}
-  if(ts-lastTick<speedMs){loopId=requestAnimationFrame(tick);return;}lastTick=ts;
-  if(nextDir.x!==-dir.x||nextDir.y!==-dir.y)dir=nextDir;
-  const head={...snake[0]};head.x+=dir.x;head.y+=dir.y;
-  // gå gjennom veggene
-  if(head.x<0)head.x=cols-1;else if(head.x>=cols)head.x=0;
-  if(head.y<0)head.y=rows-1;else if(head.y>=rows)head.y=0;
-  if(snake.some(p=>p.x===head.x&&p.y===head.y)){loseLife("Halen");return loopId=requestAnimationFrame(tick);}
-  snake.unshift(head);
-  if(apple&&head.x===apple.x&&head.y===apple.y){paused=true;askQuestion();}
-  else{if(growth>0)growth--;else snake.pop();}
-  draw();loopId=requestAnimationFrame(tick);
+ fit();if(paused){draw();loopId=requestAnimationFrame(tick);return;}
+ if(ts-lastTick<speedMs){loopId=requestAnimationFrame(tick);return;}lastTick=ts;
+ if(nextDir.x!==-dir.x||nextDir.y!==-dir.y)dir=nextDir;
+ const head={...snake[0]};head.x+=dir.x;head.y+=dir.y;
+ if(head.x<0)head.x=cols-1;else if(head.x>=cols)head.x=0;
+ if(head.y<0)head.y=rows-1;else if(head.y>=rows)head.y=0;
+ if(snake.some(p=>p.x===head.x&&p.y===head.y)){loseLife("Halen");return loopId=requestAnimationFrame(tick);}
+ snake.unshift(head);
+ if(apple&&head.x===apple.x&&head.y===apple.y){paused=true;ask();}
+ else{if(growth>0)growth--;else snake.pop();}
+ draw();loopId=requestAnimationFrame(tick);
 }
 
 /* --- Spørsmål --- */
 function pick(){return PAIRS[rand(PAIRS.length)];}
-function askQuestion(){current=pick();norw.textContent=current.no;ans.value="";modal.style.display="flex";ans.focus();}
-function handleAnswer(ok){
-  modal.style.display="none";
-  if(ok){score+=10;ui.score.textContent=score;growth+=2;speedMs=Math.max(1000/16,speedMs*0.985);flash("Riktig +10 og vekst",true);}
-  else loseLife("Feil svar");
-  placeApple();paused=false;
+function ask(){current=pick();norw.textContent=current.no;ans.value="";modal.style.display="flex";ans.focus();}
+function handle(ok){
+ modal.style.display="none";
+ if(ok){scoreVal+=10;ui.score.textContent=scoreVal;growth+=2;speedMs=Math.max(1000/16,speedMs*0.985);flash("Riktig +10 og vekst",true);}
+ else loseLife("Feil svar");
+ placeApple();paused=false;
 }
-function check(){if(!current)return;handleAnswer(norm(ans.value)===norm(current.en));}
+function check(){if(!current)return;handle(norm(ans.value)===norm(current.en));}
 checkBtn.onclick=check;ans.addEventListener("keydown",e=>{if(e.key==="Enter")check();});
 skipBtn.onclick=()=>{modal.style.display="none";loseLife("Hoppet over");placeApple();paused=false;};
 
 /* --- Liv --- */
 function loseLife(r){
-  lives--;ui.lives.textContent="❤".repeat(Math.max(lives,0));flash(`${r}! -1 liv`,false,1000);
-  if(lives<=0)return gameOver();
-  snake=[{x:Math.floor(cols/2),y:Math.floor(rows/2)}];dir={x:1,y:0};nextDir={x:1,y:0};growth=0;
+ livesVal--;ui.lives.textContent="❤".repeat(Math.max(livesVal,0));flash(`${r}! -1 liv`,false,1000);
+ if(livesVal<=0)return gameOver();
+ snake=[{x:Math.floor(cols/2),y:Math.floor(rows/2)}];dir={x:1,y:0};nextDir={x:1,y:0};growth=0;
 }
 function gameOver(){
-  paused=true;
-  const best=Number(localStorage.getItem(LS_KEY)||0);
-  if(score>best){localStorage.setItem(LS_KEY,String(score));ui.best.textContent=score;}
-  flash(`Game over – Poeng: ${score}`,false,1600);
+ paused=true;
+ const best=Number(localStorage.getItem(LS_KEY)||0);
+ if(scoreVal>best){localStorage.setItem(LS_KEY,String(scoreVal));ui.best.textContent=scoreVal;}
+ flash(`Game over – Poeng: ${scoreVal}`,false,1600);
 }
 
 /* --- Kontroller --- */
 function setDir(dx,dy){if(dx===-dir.x&&dy===-dir.y)return;nextDir={x:dx,y:dy};}
 window.addEventListener('keydown',e=>{
-  const k=e.key.toLowerCase();
-  if(["arrowup","w"].includes(k))setDir(0,-1);
-  else if(["arrowdown","s"].includes(k))setDir(0,1);
-  else if(["arrowleft","a"].includes(k))setDir(-1,0);
-  else if(["arrowright","d"].includes(k))setDir(1,0);
+ const k=e.key.toLowerCase();
+ if(["arrowup","w"].includes(k))setDir(0,-1);
+ else if(["arrowdown","s"].includes(k))setDir(0,1);
+ else if(["arrowleft","a"].includes(k))setDir(-1,0);
+ else if(["arrowright","d"].includes(k))setDir(1,0);
 });
-let touchStart=null;
-cv.addEventListener('touchstart',e=>{
-  const t=e.changedTouches[0];touchStart={x:t.clientX,y:t.clientY};},{passive:true});
-cv.addEventListener('touchend',e=>{
-  if(!touchStart)return;const t=e.changedTouches[0];
-  const dx=t.clientX-touchStart.x,dy=t.clientY-touchStart.y;
-  if(Math.abs(dx)>Math.abs(dy))setDir(dx>0?1:-1,0);else setDir(0,dy>0?1:-1);
-  touchStart=null;
-});
+document.getElementById('up').onclick=()=>setDir(0,-1);
+document.getElementById('down').onclick=()=>setDir(0,1);
+document.getElementById('left').onclick=()=>setDir(-1,0);
+document.getElementById('right').onclick=()=>setDir(1,0);
 
 /* --- UI --- */
 ui.start.onclick=()=>{speedMs=1000/Number(ui.speed.value);ui.speedShow.textContent=ui.speed.value;reset();};
