@@ -11,7 +11,8 @@
     --head:56px;
   }
   *{box-sizing:border-box}
-  html,body{height:100vh;margin:0;background:#0c1020;color:var(--ink);font:16px system-ui,Segoe UI,Roboto,Arial}
+  html,body{height:100vh;margin:0;background:#0c1020;color:var(--ink);
+            font:16px system-ui,Segoe UI,Roboto,Arial}
   @media (min-width:900px){ html,body{overflow:hidden} }
 
   header{
@@ -25,8 +26,7 @@
     height: calc(100vh - var(--head));
     display:grid;
     grid-template-columns: 1fr 320px;
-    gap:12px;
-    padding:8px;
+    gap:12px; padding:8px;
   }
   @media (max-width:900px){
     .screen{grid-template-columns:1fr; height:auto; min-height:calc(100vh - var(--head))}
@@ -66,6 +66,7 @@
     #mobControls button{width:70px; height:70px; font-size:30px; border-radius:14px}
   }
 
+  /* Spørsmål-modal */
   #modal{
     position:fixed; inset:0; background:rgba(0,0,0,.55); display:none;
     align-items:center; justify-content:center; z-index:50; padding:10px
@@ -84,6 +85,17 @@
   table{width:100%; border-collapse:collapse; font-size:15px}
   th,td{border:1px solid #2a3a68; padding:6px 8px; text-align:left}
   th{background:#1a2240}
+
+  /* Oppsummering-modal */
+  #summary{
+    position:fixed; inset:0; background:rgba(0,0,0,.65); display:none;
+    align-items:center; justify-content:center; z-index:60; padding:10px
+  }
+  #sumcard{
+    width:min(92vw,560px); background:#111a36; border:1px solid #2a3a68;
+    border-radius:14px; padding:16px; box-shadow:0 10px 30px rgba(0,0,0,.4)
+  }
+  #sumlist{margin:8px 0 0; line-height:1.6}
 </style>
 </head>
 <body>
@@ -103,6 +115,7 @@
       <span class="chip">Liv: <b id="lives">❤❤❤</b></span>
       <span class="chip">Fart: <b id="speedShow">7</b></span>
       <span class="chip">Topp: <b id="best">0</b></span>
+      <span class="chip">Gjenstår: <b id="remain">10</b></span>
     </div>
 
     <div class="row">
@@ -122,10 +135,12 @@
   </aside>
 </section>
 
+<!-- Spørsmål -->
 <div id="modal">
   <div id="card">
-    <p>Skriv engelsk for: <span id="norw" class="good"></span></p>
-    <input id="ans" type="text" inputmode="latin" autocomplete="off" autocapitalize="none" spellcheck="false" />
+    <p style="margin:0 0 8px">Skriv engelsk for: <span id="norw" class="good"></span></p>
+    <input id="ans" type="text" inputmode="latin" autocomplete="off" autocapitalize="none" spellcheck="false"
+           placeholder="skriv engelsk og trykk Enter/Sjekk" />
     <div class="row" style="justify-content:space-between; margin-top:10px">
       <div class="row">
         <button id="check" class="btn-prim">Sjekk</button>
@@ -134,6 +149,17 @@
       <button id="toggleQFasit">Vis fasit ▼</button>
     </div>
     <div id="qFasit"></div>
+  </div>
+</div>
+
+<!-- Oppsummering -->
+<div id="summary">
+  <div id="sumcard">
+    <h3 style="margin:0 0 6px">Oppsummering – Uke 45</h3>
+    <div id="sumlist"></div>
+    <div class="row" style="justify-content:flex-end;margin-top:12px">
+      <button id="sumClose" class="btn-prim">Spill igjen</button>
+    </div>
   </div>
 </div>
 
@@ -152,7 +178,7 @@ const PAIRS = [
   {en:"Knickers", no:"underbukser"}
 ];
 
-/* ====== Header-høyde for 100vh-layout ====== */
+/* ====== Header-høyde (for 100vh-layout) ====== */
 function setHeaderVar(){
   const h = document.querySelector('header').offsetHeight || 56;
   document.documentElement.style.setProperty('--head', h + 'px');
@@ -175,6 +201,7 @@ const ui = {
   down: document.getElementById('down'),
   left: document.getElementById('left'),
   right: document.getElementById('right'),
+  remain: document.getElementById('remain')
 };
 const modal = document.getElementById('modal');
 const norw  = document.getElementById('norw');
@@ -184,25 +211,20 @@ const btnSkip  = document.getElementById('skip');
 const btnToggleQFasit = document.getElementById('toggleQFasit');
 const qFasitDiv = document.getElementById('qFasit');
 
-const LS_KEY = "snake45_best_final_halv";
+const summary = document.getElementById('summary');
+const sumlist = document.getElementById('sumlist');
+const sumClose = document.getElementById('sumClose');
+
+const LS_KEY = "snake45_best_summary_all";
 ui.best.textContent = localStorage.getItem(LS_KEY) || 0;
 
-/* ====== Bygg fasit i modal (engelsk → norsk) ====== */
+/* ====== Bygg fasit-tabell i modal (engelsk → norsk) ====== */
 qFasitDiv.innerHTML = `<table>
   <tr><th>Engelsk</th><th>Norsk</th></tr>
   ${PAIRS.map(p=>`<tr><td>${p.en}</td><td>${p.no}</td></tr>`).join('')}
 </table>`;
 
-/* Flagges når fasit åpnes i en runde (gir halv poengsum) */
-let usedFasitThisRound = false;
-btnToggleQFasit.addEventListener('click', (e)=>{
-  const show = qFasitDiv.style.display !== 'block';
-  qFasitDiv.style.display = show ? 'block' : 'none';
-  e.target.textContent = show ? 'Skjul fasit ▲' : 'Vis fasit ▼';
-  if(show) usedFasitThisRound = true; // teller selv om man lukker igjen
-});
-
-/* ====== Canvas sizing (3:2, fyller høyden) ====== */
+/* ====== Canvas sizing (3:2) ====== */
 let grid = 24, cols = Math.floor(cv.width / grid), rows = Math.floor(cv.height / grid);
 function fitCanvas(){
   const box = document.getElementById('canvasBox');
@@ -240,24 +262,46 @@ function toast(msg, ok=true, t=1200){
 }
 
 /* ====== Spilltilstand ====== */
-let snake, dir, nextDir, apple, score, lives, paused=true, loopId=null, lastTick=0,
-    speedMs = 1000/7, growth=0, current=null;
+let snake, dir, nextDir, score, lives, paused=true, loopId=null, lastTick=0,
+    speedMs = 1000/7, growth=0;
+
+/* Epler: ett per glose */
+let apples = []; // {x,y, idx} der idx peker inn i PAIRS
+/* Pågående spørsmål */
+let currentIdx = null;
+let usedFasitThisRound = false;
+
+/* Statistikk */
+let correct = 0, wrong = 0, correctWithFasit = 0, correctWithoutFasit = 0;
 
 /* ====== Start/Reset ====== */
-function freeCell(){
+function freeCellAvoidSnakeAndApples(){
   let x,y,tries=0;
-  do{ x=rand(cols); y=rand(rows); tries++; if(tries>1000)break; }
-  while(snake.some(s=>s.x===x&&s.y===y));
+  do{
+    x=rand(cols); y=rand(rows); tries++;
+    if(tries>2000) break;
+  }while(
+    snake.some(s=>s.x===x&&s.y===y) ||
+    apples.some(a=>a.x===x && a.y===y)
+  );
   return {x,y};
 }
-function placeApple(){ apple = freeCell(); }
+function seedAllApples(){
+  apples = [];
+  for(let idx=0; idx<PAIRS.length; idx++){
+    const pos = freeCellAvoidSnakeAndApples();
+    apples.push({x:pos.x, y:pos.y, idx});
+  }
+  ui.remain.textContent = String(apples.length);
+}
 function reset(){
   fitCanvas();
   snake = [{x:Math.floor(cols/2), y:Math.floor(rows/2)}];
   dir = {x:1,y:0}; nextDir = {x:1,y:0};
   score = 0; lives = 3; growth = 0;
+  correct = 0; wrong = 0; correctWithFasit = 0; correctWithoutFasit = 0;
   ui.score.textContent = score; ui.lives.textContent = "❤❤❤";
-  placeApple();
+  seedAllApples();
   paused = false; cancelAnimationFrame(loopId); draw(); loopId = requestAnimationFrame(tick);
 }
 
@@ -267,11 +311,13 @@ function draw(){
   ctx.strokeStyle="rgba(34,48,89,.6)"; ctx.lineWidth=1;
   for(let i=0;i<=cols;i++){ ctx.beginPath(); ctx.moveTo(i*grid,0); ctx.lineTo(i*grid,cv.height); ctx.stroke(); }
   for(let j=0;j<=rows;j++){ ctx.beginPath(); ctx.moveTo(0,j*grid); ctx.lineTo(cv.width,j*grid); ctx.stroke(); }
-  // eple
-  if(apple){
-    ctx.font="bold 18px system-ui"; ctx.textAlign="center"; ctx.textBaseline="middle";
-    ctx.fillText("🍎", apple.x*grid+grid/2, apple.y*grid+grid/2);
-  }
+
+  // alle epler
+  ctx.font="bold 18px system-ui"; ctx.textAlign="center"; ctx.textBaseline="middle";
+  apples.forEach(a=>{
+    ctx.fillText("🍎", a.x*grid+grid/2, a.y*grid+grid/2);
+  });
+
   // slange
   ctx.fillStyle="#79c8ff";
   snake.forEach((s,i)=>{
@@ -295,6 +341,7 @@ function tick(ts){
   // gjennom vegger
   if(head.x<0) head.x=cols-1; else if(head.x>=cols) head.x=0;
   if(head.y<0) head.y=rows-1; else if(head.y>=rows) head.y=0;
+
   // selvkollisjon
   if(snake.some(p=>p.x===head.x && p.y===head.y)){
     loseLife("Traff halen"); draw(); loopId=requestAnimationFrame(tick); return;
@@ -302,8 +349,14 @@ function tick(ts){
 
   snake.unshift(head);
 
-  if(apple && head.x===apple.x && head.y===apple.y){
-    paused=true; askQuestion();
+  // eple-treff? (sjekk mot alle)
+  const hitIndex = apples.findIndex(a=>a.x===head.x && a.y===head.y);
+  if(hitIndex>-1){
+    // stopp og spør for akkurat den glosen
+    paused=true;
+    currentIdx = apples[hitIndex].idx;
+    usedFasitThisRound = false;
+    openQuestion(currentIdx, hitIndex); // send også indeksen i apples-lista
   }else{
     if(growth>0) growth--; else snake.pop();
   }
@@ -312,51 +365,109 @@ function tick(ts){
 }
 
 /* ====== Spørsmål ====== */
-function pickWord(){ return PAIRS[rand(PAIRS.length)]; }
-function askQuestion(){
-  current = pickWord();
-  norw.textContent = current.no;
+function openQuestion(idx, applesIndex){
+  norw.textContent = PAIRS[idx].no;
   ans.value="";
   qFasitDiv.style.display="none";
   btnToggleQFasit.textContent="Vis fasit ▼";
-  usedFasitThisRound = false;            // reset for ny runde
+  modal.dataset.appleIndex = String(applesIndex); // lagre hvilken apple som ble truffet
   modal.style.display="flex";
   setTimeout(()=>ans.focus({preventScroll:true}), 50);
 }
+btnToggleQFasit.addEventListener('click', (e)=>{
+  const show = qFasitDiv.style.display !== 'block';
+  qFasitDiv.style.display = show ? 'block' : 'none';
+  e.target.textContent = show ? 'Skjul fasit ▲' : 'Vis fasit ▼';
+  if(show) usedFasitThisRound = true;
+});
+
 function handleAnswer(ok){
   modal.style.display="none";
+  const ai = Number(modal.dataset.appleIndex);
+  // Fjern eplet uansett (oppgaven regnes som besvart)
+  if(ai>=0 && ai<apples.length){
+    apples.splice(ai,1);
+    ui.remain.textContent = String(apples.length);
+  }
   if(ok){
-    const add = usedFasitThisRound ? 5 : 10; // halv poeng hvis fasit brukt
+    const add = usedFasitThisRound ? 5 : 10;
     score += add; ui.score.textContent = score;
-    growth += 2; 
-    speedMs = Math.max(1000/16, speedMs*0.985);
+    growth += 2; speedMs = Math.max(1000/16, speedMs*0.985);
+    correct++;
+    if(usedFasitThisRound) correctWithFasit++; else correctWithoutFasit++;
     toast(usedFasitThisRound ? `✅ Riktig! +${add} (fasit brukt)` : `✅ Riktig! +${add}`, true, 1300);
   }else{
-    loseLife("❌ Feil svar");
+    wrong++; loseLife("❌ Feil svar");
   }
-  placeApple(); paused=false;
+  // Ferdig med alle?
+  if(apples.length===0){
+    paused = true;
+    showSummary();
+    return;
+  }
+  paused=false;
 }
 function checkAnswer(){
-  if(!current) return;
-  handleAnswer( norm(ans.value) === norm(current.en) );
+  if(currentIdx==null) return;
+  handleAnswer( norm(ans.value) === norm(PAIRS[currentIdx].en) );
 }
 btnCheck.onclick = checkAnswer;
 ans.addEventListener('keydown', e=>{ if(e.key==="Enter") checkAnswer(); });
-btnSkip.onclick = ()=>{ modal.style.display="none"; loseLife("Hoppet over"); placeApple(); paused=false; };
+btnSkip.onclick = ()=>{
+  modal.style.display="none";
+  wrong++; loseLife("Hoppet over");
+  // Også telle oppgaven som “besvart” og fjerne eplet
+  const ai = Number(modal.dataset.appleIndex);
+  if(ai>=0 && ai<apples.length){
+    apples.splice(ai,1);
+    ui.remain.textContent = String(apples.length);
+  }
+  if(apples.length===0){
+    paused = true; showSummary(); return;
+  }
+  paused=false;
+};
+
+/* ====== Oppsummering ====== */
+function showSummary(){
+  // Oppdater best-score også her
+  const best = Number(localStorage.getItem(LS_KEY)||0);
+  if(score>best){ localStorage.setItem(LS_KEY,String(score)); ui.best.textContent = score; }
+  sumlist.innerHTML = `
+    <div>Poeng: <b>${score}</b></div>
+    <div>Riktige: <b>${correct}</b></div>
+    <div>Feil: <b>${wrong}</b></div>
+    <div>Riktige uten fasit: <b>${correctWithoutFasit}</b></div>
+    <div>Riktige med fasit: <b>${correctWithFasit}</b></div>
+  `;
+  summary.style.display="flex";
+}
+sumClose.onclick = ()=>{ summary.style.display="none"; reset(); };
 
 /* ====== Liv / slutt ====== */
 function loseLife(reason){
   lives--; ui.lives.textContent = "❤".repeat(Math.max(lives,0));
   toast(`${reason} –1 liv`, false, 1100);
-  if(lives<=0){ return gameOver(); }
+  if(lives<=0){
+    // Hvis man dør før alle epler er tatt, vis “game over” og tilbud restart
+    paused=true;
+    const best = Number(localStorage.getItem(LS_KEY)||0);
+    if(score>best){ localStorage.setItem(LS_KEY,String(score)); ui.best.textContent = score; }
+    sumlist.innerHTML = `
+      <div>🕹️ Game over</div>
+      <div>Poeng: <b>${score}</b></div>
+      <div>Riktige: <b>${correct}</b></div>
+      <div>Feil: <b>${wrong}</b></div>
+      <div>Riktige uten fasit: <b>${correctWithoutFasit}</b></div>
+      <div>Riktige med fasit: <b>${correctWithFasit}</b></div>
+      <div>Gjenstående oppgaver: <b>${apples.length}</b></div>
+    `;
+    summary.style.display="flex";
+    return;
+  }
+  // myk reset av slange
   snake=[{x:Math.floor(cols/2), y:Math.floor(rows/2)}];
   dir={x:1,y:0}; nextDir={x:1,y:0}; growth=0;
-}
-function gameOver(){
-  paused=true;
-  const best = Number(localStorage.getItem(LS_KEY)||0);
-  if(score>best){ localStorage.setItem(LS_KEY,String(score)); ui.best.textContent = score; }
-  toast(`🕹️ Game over – Poeng: ${score}`, false, 1600);
 }
 
 /* ====== Kontroller ====== */
@@ -386,8 +497,7 @@ ui.speed.addEventListener('input', ()=>{
 });
 
 /* ====== Boot ====== */
-function setHeaderVar(){const h=document.querySelector('header').offsetHeight||56;document.documentElement.style.setProperty('--head',h+'px');}
-fitCanvas(); setHeaderVar(); draw();
+fitCanvas(); draw();
 </script>
 </body>
 </html>
