@@ -138,6 +138,7 @@
 </div>
 
 <script>
+/* ====== Gloser uke 45 ====== */
 const PAIRS = [
   {en:"Decent", no:"ordentlig"},
   {en:"Grin", no:"smil"},
@@ -151,6 +152,7 @@ const PAIRS = [
   {en:"Knickers", no:"underbukser"}
 ];
 
+/* ====== Header-høyde for 100vh-layout ====== */
 function setHeaderVar(){
   const h = document.querySelector('header').offsetHeight || 56;
   document.documentElement.style.setProperty('--head', h + 'px');
@@ -158,145 +160,234 @@ function setHeaderVar(){
 window.addEventListener('resize', setHeaderVar);
 setHeaderVar();
 
-const cv=document.getElementById('game'),ctx=cv.getContext('2d');
-const ui={
-  score:score=document.getElementById('score'),
-  lives:document.getElementById('lives'),
-  best:document.getElementById('best'),
-  speed:document.getElementById('speed'),
-  speedShow:document.getElementById('speedShow'),
-  start:document.getElementById('start'),
-  pause:document.getElementById('pause'),
-  up:document.getElementById('up'),down:document.getElementById('down'),
-  left:document.getElementById('left'),right:document.getElementById('right')
+/* ====== DOM ====== */
+const cv = document.getElementById('game');
+const ctx = cv.getContext('2d');
+const ui = {
+  score: document.getElementById('score'),
+  lives: document.getElementById('lives'),
+  best: document.getElementById('best'),
+  speed: document.getElementById('speed'),
+  speedShow: document.getElementById('speedShow'),
+  start: document.getElementById('start'),
+  pause: document.getElementById('pause'),
+  up: document.getElementById('up'),
+  down: document.getElementById('down'),
+  left: document.getElementById('left'),
+  right: document.getElementById('right'),
 };
-const modal=document.getElementById('modal'),
-norw=document.getElementById('norw'),
-ans=document.getElementById('ans'),
-btnCheck=document.getElementById('check'),
-btnSkip=document.getElementById('skip'),
-btnToggleQFasit=document.getElementById('toggleQFasit'),
-qFasitDiv=document.getElementById('qFasit');
+const modal = document.getElementById('modal');
+const norw  = document.getElementById('norw');
+const ans   = document.getElementById('ans');
+const btnCheck = document.getElementById('check');
+const btnSkip  = document.getElementById('skip');
+const btnToggleQFasit = document.getElementById('toggleQFasit');
+const qFasitDiv = document.getElementById('qFasit');
 
-const LS_KEY="snake45_best_final";
-ui.best.textContent=localStorage.getItem(LS_KEY)||0;
+const LS_KEY = "snake45_best_final_halv";
+ui.best.textContent = localStorage.getItem(LS_KEY) || 0;
 
-qFasitDiv.innerHTML=`<table><tr><th>Engelsk</th><th>Norsk</th></tr>${PAIRS.map(p=>`<tr><td>${p.en}</td><td>${p.no}</td></tr>`).join("")}</table>`;
-btnToggleQFasit.addEventListener('click',e=>{
-  const show=qFasitDiv.style.display!=='block';
-  qFasitDiv.style.display=show?'block':'none';
-  e.target.textContent=show?'Skjul fasit ▲':'Vis fasit ▼';
+/* ====== Bygg fasit i modal (engelsk → norsk) ====== */
+qFasitDiv.innerHTML = `<table>
+  <tr><th>Engelsk</th><th>Norsk</th></tr>
+  ${PAIRS.map(p=>`<tr><td>${p.en}</td><td>${p.no}</td></tr>`).join('')}
+</table>`;
+
+/* Flagges når fasit åpnes i en runde (gir halv poengsum) */
+let usedFasitThisRound = false;
+btnToggleQFasit.addEventListener('click', (e)=>{
+  const show = qFasitDiv.style.display !== 'block';
+  qFasitDiv.style.display = show ? 'block' : 'none';
+  e.target.textContent = show ? 'Skjul fasit ▲' : 'Vis fasit ▼';
+  if(show) usedFasitThisRound = true; // teller selv om man lukker igjen
 });
 
-let grid=24,cols=Math.floor(cv.width/grid),rows=Math.floor(cv.height/grid);
+/* ====== Canvas sizing (3:2, fyller høyden) ====== */
+let grid = 24, cols = Math.floor(cv.width / grid), rows = Math.floor(cv.height / grid);
 function fitCanvas(){
-  const box=document.getElementById('canvasBox');
-  const bw=box.clientWidth-16,bh=box.clientHeight-16;
-  if(bw<=0||bh<=0)return;
-  let targetW=bw,targetH=Math.round(bw*2/3);
-  if(targetH>bh){targetH=bh;targetW=Math.round(bh*3/2);}
-  cv.style.width=targetW+'px';cv.style.height=targetH+'px';
-  const ratio=window.devicePixelRatio||1;
-  const w=Math.floor(targetW*ratio),h=Math.floor(targetH*ratio);
-  if(cv.width!==w||cv.height!==h){
-    cv.width=w;cv.height=h;cols=Math.floor(w/grid);rows=Math.floor(h/grid);
+  const box = document.getElementById('canvasBox');
+  const bw = box.clientWidth - 16, bh = box.clientHeight - 16;
+  if (bw <= 0 || bh <= 0) return;
+  let targetW = bw, targetH = Math.round(bw * 2/3);
+  if (targetH > bh){ targetH = bh; targetW = Math.round(bh * 3/2); }
+  cv.style.width = targetW + 'px';
+  cv.style.height = targetH + 'px';
+  const ratio = window.devicePixelRatio || 1;
+  const w = Math.floor(targetW * ratio);
+  const h = Math.floor(targetH * ratio);
+  if (cv.width !== w || cv.height !== h){
+    cv.width = w; cv.height = h;
+    cols = Math.floor(w / grid);
+    rows = Math.floor(h / grid);
   }
 }
-window.addEventListener('resize',fitCanvas);
+window.addEventListener('resize', fitCanvas);
 
-const rand=n=>Math.floor(Math.random()*n);
-const norm=s=>s.trim().toLowerCase().replace(/\s+/g," ");
-function toast(msg,ok=true,t=1200){
+/* ====== Utils ====== */
+const rand = n => Math.floor(Math.random()*n);
+const norm = s => s.trim().toLowerCase().replace(/\s+/g," ");
+function toast(msg, ok=true, t=1200){
   const e=document.createElement('div');
   e.textContent=msg;
-  e.style.position="fixed";e.style.left="50%";e.style.top="50%";
+  e.style.position="fixed"; e.style.left="50%"; e.style.top="50%";
   e.style.transform="translate(-50%,-50%)";
-  e.style.background=ok?"#1f503a":"#5b2230";
-  e.style.color="#fff";e.style.padding="14px 18px";
-  e.style.borderRadius="12px";e.style.fontSize="22px";e.style.fontWeight="800";
-  e.style.boxShadow="0 0 20px rgba(0,0,0,.5)";e.style.zIndex=200;
-  document.body.appendChild(e);setTimeout(()=>e.remove(),t);
+  e.style.background= ok ? "#1f503a" : "#5b2230";
+  e.style.color="#fff"; e.style.padding="14px 18px";
+  e.style.borderRadius="12px"; e.style.fontSize="22px"; e.style.fontWeight="800";
+  e.style.boxShadow="0 0 20px rgba(0,0,0,.5)"; e.style.zIndex=200;
+  document.body.appendChild(e);
+  setTimeout(()=>e.remove(), t);
 }
 
-let snake,dir,nextDir,apple,scoreVal,livesVal,paused=true,loopId=null,lastTick=0,
-speedMs=1000/7,growth=0,current=null;
+/* ====== Spilltilstand ====== */
+let snake, dir, nextDir, apple, score, lives, paused=true, loopId=null, lastTick=0,
+    speedMs = 1000/7, growth=0, current=null;
 
-function freeCell(){let x,y;do{x=rand(cols);y=rand(rows);}while(snake.some(s=>s.x===x&&s.y===y));return{x,y};}
-function placeApple(){apple=freeCell();}
+/* ====== Start/Reset ====== */
+function freeCell(){
+  let x,y,tries=0;
+  do{ x=rand(cols); y=rand(rows); tries++; if(tries>1000)break; }
+  while(snake.some(s=>s.x===x&&s.y===y));
+  return {x,y};
+}
+function placeApple(){ apple = freeCell(); }
 function reset(){
-  fitCanvas();snake=[{x:Math.floor(cols/2),y:Math.floor(rows/2)}];
-  dir={x:1,y:0};nextDir={x:1,y:0};scoreVal=0;livesVal=3;growth=0;
-  ui.score.textContent=scoreVal;ui.lives.textContent="❤❤❤";
-  placeApple();paused=false;cancelAnimationFrame(loopId);draw();loopId=requestAnimationFrame(tick);
+  fitCanvas();
+  snake = [{x:Math.floor(cols/2), y:Math.floor(rows/2)}];
+  dir = {x:1,y:0}; nextDir = {x:1,y:0};
+  score = 0; lives = 3; growth = 0;
+  ui.score.textContent = score; ui.lives.textContent = "❤❤❤";
+  placeApple();
+  paused = false; cancelAnimationFrame(loopId); draw(); loopId = requestAnimationFrame(tick);
 }
+
+/* ====== Tegn ====== */
 function draw(){
-  ctx.fillStyle="#0a1020";ctx.fillRect(0,0,cv.width,cv.height);
-  ctx.strokeStyle="rgba(34,48,89,.6)";
-  for(let i=0;i<=cols;i++){ctx.beginPath();ctx.moveTo(i*grid,0);ctx.lineTo(i*grid,cv.height);ctx.stroke();}
-  for(let j=0;j<=rows;j++){ctx.beginPath();ctx.moveTo(0,j*grid);ctx.lineTo(cv.width,j*grid);ctx.stroke();}
-  if(apple){ctx.font="bold 18px system-ui";ctx.textAlign="center";ctx.textBaseline="middle";
-    ctx.fillText("🍎",apple.x*grid+grid/2,apple.y*grid+grid/2);}
+  ctx.fillStyle="#0a1020"; ctx.fillRect(0,0,cv.width,cv.height);
+  ctx.strokeStyle="rgba(34,48,89,.6)"; ctx.lineWidth=1;
+  for(let i=0;i<=cols;i++){ ctx.beginPath(); ctx.moveTo(i*grid,0); ctx.lineTo(i*grid,cv.height); ctx.stroke(); }
+  for(let j=0;j<=rows;j++){ ctx.beginPath(); ctx.moveTo(0,j*grid); ctx.lineTo(cv.width,j*grid); ctx.stroke(); }
+  // eple
+  if(apple){
+    ctx.font="bold 18px system-ui"; ctx.textAlign="center"; ctx.textBaseline="middle";
+    ctx.fillText("🍎", apple.x*grid+grid/2, apple.y*grid+grid/2);
+  }
+  // slange
   ctx.fillStyle="#79c8ff";
   snake.forEach((s,i)=>{
-    const x=s.x*grid,y=s.y*grid;
+    const x=s.x*grid, y=s.y*grid;
     ctx.fillRect(x+2,y+2,grid-4,grid-4);
-    if(i===0){ctx.fillStyle="#0b1020";ctx.fillRect(x+6,y+8,3,3);
-      ctx.fillRect(x+grid-9,y+8,3,3);ctx.fillStyle="#79c8ff";}
+    if(i===0){ ctx.fillStyle="#0b1020"; ctx.fillRect(x+6,y+8,3,3); ctx.fillRect(x+grid-9,y+8,3,3); ctx.fillStyle="#79c8ff"; }
   });
 }
+
+/* ====== Loop ====== */
 function tick(ts){
-  fitCanvas();if(paused){draw();loopId=requestAnimationFrame(tick);return;}
-  if(ts-lastTick<speedMs){loopId=requestAnimationFrame(tick);return;}
-  lastTick=ts;if(nextDir.x!==-dir.x||nextDir.y!==-dir.y)dir=nextDir;
-  const head={...snake[0]};head.x+=dir.x;head.y+=dir.y;
-  if(head.x<0)head.x=cols-1;else if(head.x>=cols)head.x=0;
-  if(head.y<0)head.y=rows-1;else if(head.y>=rows)head.y=0;
-  if(snake.some(p=>p.x===head.x&&p.y===head.y)){loseLife("Traff halen");draw();loopId=requestAnimationFrame(tick);return;}
+  fitCanvas();
+  if(paused){ draw(); loopId = requestAnimationFrame(tick); return; }
+  if(ts - lastTick < speedMs){ loopId = requestAnimationFrame(tick); return; }
+  lastTick = ts;
+
+  if(nextDir.x!==-dir.x || nextDir.y!==-dir.y) dir = nextDir;
+
+  const head = {...snake[0]};
+  head.x += dir.x; head.y += dir.y;
+  // gjennom vegger
+  if(head.x<0) head.x=cols-1; else if(head.x>=cols) head.x=0;
+  if(head.y<0) head.y=rows-1; else if(head.y>=rows) head.y=0;
+  // selvkollisjon
+  if(snake.some(p=>p.x===head.x && p.y===head.y)){
+    loseLife("Traff halen"); draw(); loopId=requestAnimationFrame(tick); return;
+  }
+
   snake.unshift(head);
-  if(apple&&head.x===apple.x&&head.y===apple.y){paused=true;ask();}
-  else{if(growth>0)growth--;else snake.pop();}
-  draw();loopId=requestAnimationFrame(tick);
+
+  if(apple && head.x===apple.x && head.y===apple.y){
+    paused=true; askQuestion();
+  }else{
+    if(growth>0) growth--; else snake.pop();
+  }
+
+  draw(); loopId=requestAnimationFrame(tick);
 }
-function pick(){return PAIRS[rand(PAIRS.length)];}
-function ask(){
-  current=pick();norw.textContent=current.no;ans.value="";
-  qFasitDiv.style.display="none";btnToggleQFasit.textContent="Vis fasit ▼";
-  modal.style.display="flex";setTimeout(()=>ans.focus({preventScroll:true}),50);
+
+/* ====== Spørsmål ====== */
+function pickWord(){ return PAIRS[rand(PAIRS.length)]; }
+function askQuestion(){
+  current = pickWord();
+  norw.textContent = current.no;
+  ans.value="";
+  qFasitDiv.style.display="none";
+  btnToggleQFasit.textContent="Vis fasit ▼";
+  usedFasitThisRound = false;            // reset for ny runde
+  modal.style.display="flex";
+  setTimeout(()=>ans.focus({preventScroll:true}), 50);
 }
-function handle(ok){
+function handleAnswer(ok){
   modal.style.display="none";
-  if(ok){scoreVal+=10;ui.score.textContent=scoreVal;growth+=2;speedMs=Math.max(1000/16,speedMs*0.985);toast("✅ Riktig! +10 og vekst",true);}
-  else loseLife("❌ Feil svar");
-  placeApple();paused=false;
+  if(ok){
+    const add = usedFasitThisRound ? 5 : 10; // halv poeng hvis fasit brukt
+    score += add; ui.score.textContent = score;
+    growth += 2; 
+    speedMs = Math.max(1000/16, speedMs*0.985);
+    toast(usedFasitThisRound ? `✅ Riktig! +${add} (fasit brukt)` : `✅ Riktig! +${add}`, true, 1300);
+  }else{
+    loseLife("❌ Feil svar");
+  }
+  placeApple(); paused=false;
 }
-function check(){if(!current)return;handle(norm(ans.value)===norm(current.en));}
-btnCheck.onclick=check;ans.addEventListener("keydown",e=>{if(e.key==="Enter")check();});
-btnSkip.onclick=()=>{modal.style.display="none";loseLife("Hoppet over");placeApple();paused=false;};
-function loseLife(r){
-  livesVal--;ui.lives.textContent="❤".repeat(Math.max(livesVal,0));toast(`${r} –1 liv`,false);
-  if(livesVal<=0)return gameOver();
-  snake=[{x:Math.floor(cols/2),y:Math.floor(rows/2)}];dir={x:1,y:0};nextDir={x:1,y:0};growth=0;
+function checkAnswer(){
+  if(!current) return;
+  handleAnswer( norm(ans.value) === norm(current.en) );
+}
+btnCheck.onclick = checkAnswer;
+ans.addEventListener('keydown', e=>{ if(e.key==="Enter") checkAnswer(); });
+btnSkip.onclick = ()=>{ modal.style.display="none"; loseLife("Hoppet over"); placeApple(); paused=false; };
+
+/* ====== Liv / slutt ====== */
+function loseLife(reason){
+  lives--; ui.lives.textContent = "❤".repeat(Math.max(lives,0));
+  toast(`${reason} –1 liv`, false, 1100);
+  if(lives<=0){ return gameOver(); }
+  snake=[{x:Math.floor(cols/2), y:Math.floor(rows/2)}];
+  dir={x:1,y:0}; nextDir={x:1,y:0}; growth=0;
 }
 function gameOver(){
   paused=true;
-  const best=Number(localStorage.getItem(LS_KEY)||0);
-  if(scoreVal>best){localStorage.setItem(LS_KEY,String(scoreVal));ui.best.textContent=scoreVal;}
-  toast(`🕹️ Game over – Poeng: ${scoreVal}`,false,1600);
+  const best = Number(localStorage.getItem(LS_KEY)||0);
+  if(score>best){ localStorage.setItem(LS_KEY,String(score)); ui.best.textContent = score; }
+  toast(`🕹️ Game over – Poeng: ${score}`, false, 1600);
 }
-function setDir(dx,dy){if(dx===-dir.x&&dy===-dir.y)return;nextDir={x:dx,y:dy};}
+
+/* ====== Kontroller ====== */
+function setDir(dx,dy){ if(dx===-dir.x && dy===-dir.y) return; nextDir={x:dx,y:dy}; }
 window.addEventListener('keydown',e=>{
   const k=e.key.toLowerCase();
-  if(["arrowup","w"].includes(k))setDir(0,-1);
-  else if(["arrowdown","s"].includes(k))setDir(0,1);
-  else if(["arrowleft","a"].includes(k))setDir(-1,0);
-  else if(["arrowright","d"].includes(k))setDir(1,0);
+  if(["arrowup","w"].includes(k)) setDir(0,-1);
+  else if(["arrowdown","s"].includes(k)) setDir(0,1);
+  else if(["arrowleft","a"].includes(k)) setDir(-1,0);
+  else if(["arrowright","d"].includes(k)) setDir(1,0);
 });
-if(ui.up){ui.up.onclick=()=>setDir(0,-1);ui.down.onclick=()=>setDir(0,1);
-ui.left.onclick=()=>setDir(-1,0);ui.right.onclick=()=>setDir(1,0);}
-ui.start.onclick=()=>{speedMs=1000/Number(ui.speed.value);ui.speedShow.textContent=ui.speed.value;reset();};
-ui.pause.onclick=()=>{paused=!paused;ui.pause.textContent=paused?"Fortsett":"Pause";};
-ui.speed.addEventListener("input",()=>{ui.speedShow.textContent=ui.speed.value;speedMs=1000/Number(ui.speed.value);});
-fitCanvas();draw();
+if(ui.up){ ui.up.onclick=()=>setDir(0,-1); ui.down.onclick=()=>setDir(0,1); ui.left.onclick=()=>setDir(-1,0); ui.right.onclick=()=>setDir(1,0); }
+
+/* ====== UI ====== */
+ui.start.onclick = ()=>{
+  speedMs = 1000/Number(ui.speed.value);
+  ui.speedShow.textContent = ui.speed.value;
+  reset();
+};
+ui.pause.onclick = ()=>{
+  paused = !paused;
+  ui.pause.textContent = paused ? "Fortsett" : "Pause";
+};
+ui.speed.addEventListener('input', ()=>{
+  ui.speedShow.textContent = ui.speed.value;
+  speedMs = 1000/Number(ui.speed.value);
+});
+
+/* ====== Boot ====== */
+function setHeaderVar(){const h=document.querySelector('header').offsetHeight||56;document.documentElement.style.setProperty('--head',h+'px');}
+fitCanvas(); setHeaderVar(); draw();
 </script>
 </body>
 </html>
