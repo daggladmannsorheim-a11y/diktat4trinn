@@ -8,21 +8,19 @@
   :root{
     --bg:#0c1020; --panel:#151a2b; --ink:#eef3fb; --muted:#9fb1d1;
     --line:#223059; --good:#42d392; --bad:#ff6b6b;
-    --head:56px; /* settes med JS for nøyaktig headerhøyde */
+    --head:56px;
   }
   *{box-sizing:border-box}
   html,body{height:100vh;margin:0;background:#0c1020;color:var(--ink);font:16px system-ui,Segoe UI,Roboto,Arial}
-  /* PC: lås uten scroll */
   @media (min-width:900px){ html,body{overflow:hidden} }
 
   header{
     height:auto; padding:8px 14px; background:rgba(21,26,43,.95);
-    border-bottom:1px solid var(--line); position:sticky; top:0
+    border-bottom:1px solid var(--line); position:sticky; top:0; text-align:center
   }
   h1{margin:0; font-size:18px}
   .muted{color:var(--muted)}
 
-  /* Hovedlayout fyller skjermen under header */
   .screen{
     height: calc(100vh - var(--head));
     display:grid;
@@ -34,23 +32,17 @@
     .screen{grid-template-columns:1fr; height:auto; min-height:calc(100vh - var(--head))}
   }
 
-  /* Venstre: spillboks med canvas som alltid syns */
   #canvasBox{
     background: radial-gradient(1000px 480px at 30% -8%, #18234a, #0c1020 60%);
     border:1px solid var(--line); border-radius:12px; padding:8px;
-    display:flex; align-items:center; justify-content:center;
-    /* Viktig: la boksen bruke hele høyden på PC */
-    min-height: 0; /* for grid */
+    display:flex; align-items:center; justify-content:center; min-height:0;
   }
-  /* Canvas skaleres med aspect-ratio 3:2 for å passe inn uten scroll */
   #game{
-    width:100%; height:100%;
-    aspect-ratio: 3 / 2; /* gir konsistent form */
+    width:100%; height:100%; aspect-ratio: 3 / 2;
     background:#0a1020; border:1px solid #1b274b; border-radius:10px;
     touch-action:none; display:block;
   }
 
-  /* Høyre: UI-panel (på mobil havner under) */
   #side{
     display:flex; flex-direction:column; gap:10px;
     background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:10px;
@@ -60,7 +52,6 @@
   .chip{display:inline-flex; gap:6px; align-items:center; background:#1a2240;
         border:1px solid var(--line); border-radius:999px; padding:4px 10px; font-size:14px}
   .row{display:flex; gap:8px; flex-wrap:wrap}
-
   button{
     appearance:none; background:#1b274b; color:var(--ink); border:1px solid var(--line);
     padding:8px 12px; border-radius:10px; font-weight:700; font-size:15px
@@ -68,7 +59,6 @@
   button:active{transform:translateY(1px)}
   .btn-prim{background:#1b3b2e; border-color:#225a42}
 
-  /* Mobil-piltaster: vises kun under 900px bredde */
   #mobControls{display:none}
   @media (max-width:900px){
     #mobControls{display:grid; place-items:center; gap:6px}
@@ -76,7 +66,6 @@
     #mobControls button{width:70px; height:70px; font-size:30px; border-radius:14px}
   }
 
-  /* Modal for spørsmål */
   #modal{
     position:fixed; inset:0; background:rgba(0,0,0,.55); display:none;
     align-items:center; justify-content:center; z-index:50; padding:10px
@@ -90,9 +79,8 @@
     border:1px solid #2a3a68; background:#101833; color:#fff
   }
   .good{color:var(--good)} .bad{color:var(--bad)}
-
-  /* Fasit i modal */
-  #qFasit{display:none; margin-top:10px; max-height:40vh; overflow:auto; border:1px solid #2a3a68; border-radius:10px}
+  #qFasit{display:none; margin-top:10px; max-height:40vh; overflow:auto;
+          border:1px solid #2a3a68; border-radius:10px}
   table{width:100%; border-collapse:collapse; font-size:15px}
   th,td{border:1px solid #2a3a68; padding:6px 8px; text-align:left}
   th{background:#1a2240}
@@ -101,16 +89,14 @@
 <body>
 <header>
   <h1>Snake – Gloser • Uke 45</h1>
-  <div class="muted">PC: alt på én skjerm · Mobil: knapper og tastaturstøtte · Eple = spørsmål · Gå gjennom vegger</div>
+  <div class="muted">Hei 6. trinn på Kampen skole! Kos dere med glosespill – lær, spill og ha det gøy 🍎🐍</div>
 </header>
 
 <section class="screen">
-  <!-- Venstre: Spill -->
   <div id="canvasBox">
     <canvas id="game" width="900" height="600" aria-label="Snake-spill"></canvas>
   </div>
 
-  <!-- Høyre: UI -->
   <aside id="side">
     <div class="chips">
       <span class="chip">Poeng: <b id="score">0</b></span>
@@ -125,7 +111,6 @@
       <label>Fart <input id="speed" type="range" min="4" max="16" value="7" /></label>
     </div>
 
-    <!-- Mobil-piltaster (skjules automatisk på PC) -->
     <div id="mobControls">
       <div class="row"><button id="up">⬆️</button></div>
       <div class="row">
@@ -134,16 +119,13 @@
         <button id="right">➡️</button>
       </div>
     </div>
-
-    <p class="muted" style="margin:6px 0 0">PC: piltaster/WASD · Mobil: knappene over</p>
   </aside>
 </section>
 
-<!-- Spørsmåls-modal (med “Vis fasit”-knapp) -->
 <div id="modal">
   <div id="card">
-    <p style="margin:0 0 8px">Skriv engelsk for: <span id="norw" class="good"></span></p>
-    <input id="ans" type="text" inputmode="latin" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="skriv engelsk og trykk Enter/Sjekk" />
+    <p>Skriv engelsk for: <span id="norw" class="good"></span></p>
+    <input id="ans" type="text" inputmode="latin" autocomplete="off" autocapitalize="none" spellcheck="false" />
     <div class="row" style="justify-content:space-between; margin-top:10px">
       <div class="row">
         <button id="check" class="btn-prim">Sjekk</button>
@@ -156,7 +138,6 @@
 </div>
 
 <script>
-/* ====== Data: uke 45 gloser (eng → no) ====== */
 const PAIRS = [
   {en:"Decent", no:"ordentlig"},
   {en:"Grin", no:"smil"},
@@ -170,7 +151,6 @@ const PAIRS = [
   {en:"Knickers", no:"underbukser"}
 ];
 
-/* ====== Header-høyde -> CSS-variabel for 100vh-layout ====== */
 function setHeaderVar(){
   const h = document.querySelector('header').offsetHeight || 56;
   document.documentElement.style.setProperty('--head', h + 'px');
@@ -178,228 +158,145 @@ function setHeaderVar(){
 window.addEventListener('resize', setHeaderVar);
 setHeaderVar();
 
-/* ====== DOM ====== */
-const cv = document.getElementById('game');
-const ctx = cv.getContext('2d');
-const ui = {
-  score: document.getElementById('score'),
-  lives: document.getElementById('lives'),
-  best: document.getElementById('best'),
-  speed: document.getElementById('speed'),
-  speedShow: document.getElementById('speedShow'),
-  start: document.getElementById('start'),
-  pause: document.getElementById('pause'),
-  up: document.getElementById('up'),
-  down: document.getElementById('down'),
-  left: document.getElementById('left'),
-  right: document.getElementById('right'),
+const cv=document.getElementById('game'),ctx=cv.getContext('2d');
+const ui={
+  score:score=document.getElementById('score'),
+  lives:document.getElementById('lives'),
+  best:document.getElementById('best'),
+  speed:document.getElementById('speed'),
+  speedShow:document.getElementById('speedShow'),
+  start:document.getElementById('start'),
+  pause:document.getElementById('pause'),
+  up:document.getElementById('up'),down:document.getElementById('down'),
+  left:document.getElementById('left'),right:document.getElementById('right')
 };
-const modal = document.getElementById('modal');
-const norw  = document.getElementById('norw');
-const ans   = document.getElementById('ans');
-const btnCheck = document.getElementById('check');
-const btnSkip  = document.getElementById('skip');
-const btnToggleQFasit = document.getElementById('toggleQFasit');
-const qFasitDiv = document.getElementById('qFasit');
+const modal=document.getElementById('modal'),
+norw=document.getElementById('norw'),
+ans=document.getElementById('ans'),
+btnCheck=document.getElementById('check'),
+btnSkip=document.getElementById('skip'),
+btnToggleQFasit=document.getElementById('toggleQFasit'),
+qFasitDiv=document.getElementById('qFasit');
 
-const LS_KEY = "snake45_best_en_side";
-ui.best.textContent = localStorage.getItem(LS_KEY) || 0;
+const LS_KEY="snake45_best_final";
+ui.best.textContent=localStorage.getItem(LS_KEY)||0;
 
-/* ====== Bygg fasit-tabell for modal ====== */
-qFasitDiv.innerHTML = `<table>
-  <tr><th>Engelsk</th><th>Norsk</th></tr>
-  ${PAIRS.map(p=>`<tr><td>${p.en}</td><td>${p.no}</td></tr>`).join('')}
-</table>`;
-btnToggleQFasit.addEventListener('click', (e)=>{
-  const show = qFasitDiv.style.display !== 'block';
-  qFasitDiv.style.display = show ? 'block' : 'none';
-  e.target.textContent = show ? 'Skjul fasit ▲' : 'Vis fasit ▼';
+qFasitDiv.innerHTML=`<table><tr><th>Engelsk</th><th>Norsk</th></tr>${PAIRS.map(p=>`<tr><td>${p.en}</td><td>${p.no}</td></tr>`).join("")}</table>`;
+btnToggleQFasit.addEventListener('click',e=>{
+  const show=qFasitDiv.style.display!=='block';
+  qFasitDiv.style.display=show?'block':'none';
+  e.target.textContent=show?'Skjul fasit ▲':'Vis fasit ▼';
 });
 
-/* ====== Canvas sizing: hold 3:2 og fyll høyden ====== */
-let grid = 24, cols = Math.floor(cv.width / grid), rows = Math.floor(cv.height / grid);
+let grid=24,cols=Math.floor(cv.width/grid),rows=Math.floor(cv.height/grid);
 function fitCanvas(){
-  // Fyll #canvasBox, hold 3:2, og sett intern pikselstørrelse for skarphet
-  const box = document.getElementById('canvasBox');
-  const bw = box.clientWidth - 16;   // padding-slingring
-  const bh = box.clientHeight - 16;
-  if (bw <= 0 || bh <= 0) return;
-  // mål som holder 3:2
-  let targetW = bw, targetH = Math.round(bw * 2/3);
-  if (targetH > bh){ targetH = bh; targetW = Math.round(bh * 3/2); }
-  cv.style.width = targetW + 'px';
-  cv.style.height = targetH + 'px';
-  const ratio = window.devicePixelRatio || 1;
-  const w = Math.floor(targetW * ratio);
-  const h = Math.floor(targetH * ratio);
-  if (cv.width !== w || cv.height !== h){
-    cv.width = w; cv.height = h;
-    cols = Math.floor(w / grid);
-    rows = Math.floor(h / grid);
+  const box=document.getElementById('canvasBox');
+  const bw=box.clientWidth-16,bh=box.clientHeight-16;
+  if(bw<=0||bh<=0)return;
+  let targetW=bw,targetH=Math.round(bw*2/3);
+  if(targetH>bh){targetH=bh;targetW=Math.round(bh*3/2);}
+  cv.style.width=targetW+'px';cv.style.height=targetH+'px';
+  const ratio=window.devicePixelRatio||1;
+  const w=Math.floor(targetW*ratio),h=Math.floor(targetH*ratio);
+  if(cv.width!==w||cv.height!==h){
+    cv.width=w;cv.height=h;cols=Math.floor(w/grid);rows=Math.floor(h/grid);
   }
 }
-window.addEventListener('resize', fitCanvas);
+window.addEventListener('resize',fitCanvas);
 
-/* ====== Utils ====== */
-const rand = n => Math.floor(Math.random()*n);
-const norm = s => s.trim().toLowerCase().replace(/\s+/g," ");
-function toast(msg, ok=true, t=1200){
+const rand=n=>Math.floor(Math.random()*n);
+const norm=s=>s.trim().toLowerCase().replace(/\s+/g," ");
+function toast(msg,ok=true,t=1200){
   const e=document.createElement('div');
   e.textContent=msg;
-  e.style.position="fixed"; e.style.left="50%"; e.style.top="50%";
+  e.style.position="fixed";e.style.left="50%";e.style.top="50%";
   e.style.transform="translate(-50%,-50%)";
-  e.style.background= ok ? "#1f503a" : "#5b2230";
-  e.style.color="#fff"; e.style.padding="14px 18px";
-  e.style.borderRadius="12px"; e.style.fontSize="22px"; e.style.fontWeight="800";
-  e.style.boxShadow="0 0 20px rgba(0,0,0,.5)"; e.style.zIndex=200;
-  document.body.appendChild(e);
-  setTimeout(()=>e.remove(), t);
+  e.style.background=ok?"#1f503a":"#5b2230";
+  e.style.color="#fff";e.style.padding="14px 18px";
+  e.style.borderRadius="12px";e.style.fontSize="22px";e.style.fontWeight="800";
+  e.style.boxShadow="0 0 20px rgba(0,0,0,.5)";e.style.zIndex=200;
+  document.body.appendChild(e);setTimeout(()=>e.remove(),t);
 }
 
-/* ====== Spilltilstand ====== */
-let snake, dir, nextDir, apple, score, lives, paused=true, loopId=null, lastTick=0,
-    speedMs = 1000/7, growth=0, current=null;
+let snake,dir,nextDir,apple,scoreVal,livesVal,paused=true,loopId=null,lastTick=0,
+speedMs=1000/7,growth=0,current=null;
 
-/* ====== Start/Reset ====== */
-function freeCell(){
-  let x,y,tries=0;
-  do{ x=rand(cols); y=rand(rows); tries++; if(tries>1000)break; }
-  while(snake.some(s=>s.x===x&&s.y===y));
-  return {x,y};
-}
-function placeApple(){ apple = freeCell(); }
+function freeCell(){let x,y;do{x=rand(cols);y=rand(rows);}while(snake.some(s=>s.x===x&&s.y===y));return{x,y};}
+function placeApple(){apple=freeCell();}
 function reset(){
-  fitCanvas();
-  snake = [{x:Math.floor(cols/2), y:Math.floor(rows/2)}];
-  dir = {x:1,y:0}; nextDir = {x:1,y:0};
-  score = 0; lives = 3; growth = 0;
-  ui.score.textContent = score; ui.lives.textContent = "❤❤❤";
-  placeApple();
-  paused = false; cancelAnimationFrame(loopId); draw(); loopId = requestAnimationFrame(tick);
+  fitCanvas();snake=[{x:Math.floor(cols/2),y:Math.floor(rows/2)}];
+  dir={x:1,y:0};nextDir={x:1,y:0};scoreVal=0;livesVal=3;growth=0;
+  ui.score.textContent=scoreVal;ui.lives.textContent="❤❤❤";
+  placeApple();paused=false;cancelAnimationFrame(loopId);draw();loopId=requestAnimationFrame(tick);
 }
-
-/* ====== Tegn ====== */
 function draw(){
-  ctx.fillStyle="#0a1020"; ctx.fillRect(0,0,cv.width,cv.height);
-  ctx.strokeStyle="rgba(34,48,89,.6)"; ctx.lineWidth=1;
-  for(let i=0;i<=cols;i++){ ctx.beginPath(); ctx.moveTo(i*grid,0); ctx.lineTo(i*grid,cv.height); ctx.stroke(); }
-  for(let j=0;j<=rows;j++){ ctx.beginPath(); ctx.moveTo(0,j*grid); ctx.lineTo(cv.width,j*grid); ctx.stroke(); }
-  // eple
-  if(apple){
-    ctx.font="bold 18px system-ui"; ctx.textAlign="center"; ctx.textBaseline="middle";
-    ctx.fillText("🍎", apple.x*grid+grid/2, apple.y*grid+grid/2);
-  }
-  // slange
+  ctx.fillStyle="#0a1020";ctx.fillRect(0,0,cv.width,cv.height);
+  ctx.strokeStyle="rgba(34,48,89,.6)";
+  for(let i=0;i<=cols;i++){ctx.beginPath();ctx.moveTo(i*grid,0);ctx.lineTo(i*grid,cv.height);ctx.stroke();}
+  for(let j=0;j<=rows;j++){ctx.beginPath();ctx.moveTo(0,j*grid);ctx.lineTo(cv.width,j*grid);ctx.stroke();}
+  if(apple){ctx.font="bold 18px system-ui";ctx.textAlign="center";ctx.textBaseline="middle";
+    ctx.fillText("🍎",apple.x*grid+grid/2,apple.y*grid+grid/2);}
   ctx.fillStyle="#79c8ff";
   snake.forEach((s,i)=>{
-    const x=s.x*grid, y=s.y*grid;
+    const x=s.x*grid,y=s.y*grid;
     ctx.fillRect(x+2,y+2,grid-4,grid-4);
-    if(i===0){ ctx.fillStyle="#0b1020"; ctx.fillRect(x+6,y+8,3,3); ctx.fillRect(x+grid-9,y+8,3,3); ctx.fillStyle="#79c8ff"; }
+    if(i===0){ctx.fillStyle="#0b1020";ctx.fillRect(x+6,y+8,3,3);
+      ctx.fillRect(x+grid-9,y+8,3,3);ctx.fillStyle="#79c8ff";}
   });
 }
-
-/* ====== Loop ====== */
 function tick(ts){
-  fitCanvas();
-  if(paused){ draw(); loopId = requestAnimationFrame(tick); return; }
-  if(ts - lastTick < speedMs){ loopId = requestAnimationFrame(tick); return; }
-  lastTick = ts;
-
-  if(nextDir.x!==-dir.x || nextDir.y!==-dir.y) dir = nextDir;
-
-  const head = {...snake[0]};
-  head.x += dir.x; head.y += dir.y;
-  // gjennom vegger
-  if(head.x<0) head.x=cols-1; else if(head.x>=cols) head.x=0;
-  if(head.y<0) head.y=rows-1; else if(head.y>=rows) head.y=0;
-  // selvkollisjon
-  if(snake.some(p=>p.x===head.x && p.y===head.y)){
-    loseLife("Traff halen"); draw(); loopId=requestAnimationFrame(tick); return;
-  }
-
+  fitCanvas();if(paused){draw();loopId=requestAnimationFrame(tick);return;}
+  if(ts-lastTick<speedMs){loopId=requestAnimationFrame(tick);return;}
+  lastTick=ts;if(nextDir.x!==-dir.x||nextDir.y!==-dir.y)dir=nextDir;
+  const head={...snake[0]};head.x+=dir.x;head.y+=dir.y;
+  if(head.x<0)head.x=cols-1;else if(head.x>=cols)head.x=0;
+  if(head.y<0)head.y=rows-1;else if(head.y>=rows)head.y=0;
+  if(snake.some(p=>p.x===head.x&&p.y===head.y)){loseLife("Traff halen");draw();loopId=requestAnimationFrame(tick);return;}
   snake.unshift(head);
-
-  if(apple && head.x===apple.x && head.y===apple.y){
-    paused=true; askQuestion();
-  }else{
-    if(growth>0) growth--; else snake.pop();
-  }
-
-  draw(); loopId=requestAnimationFrame(tick);
+  if(apple&&head.x===apple.x&&head.y===apple.y){paused=true;ask();}
+  else{if(growth>0)growth--;else snake.pop();}
+  draw();loopId=requestAnimationFrame(tick);
 }
-
-/* ====== Spørsmål ====== */
-function pickWord(){ return PAIRS[rand(PAIRS.length)]; }
-function askQuestion(){
-  current = pickWord();
-  norw.textContent = current.no;
-  ans.value=""; qFasitDiv.style.display="none"; btnToggleQFasit.textContent="Vis fasit ▼";
-  modal.style.display="flex";
-  // liten delay for bedre fokus på iOS
-  setTimeout(()=>ans.focus({preventScroll:true}), 50);
+function pick(){return PAIRS[rand(PAIRS.length)];}
+function ask(){
+  current=pick();norw.textContent=current.no;ans.value="";
+  qFasitDiv.style.display="none";btnToggleQFasit.textContent="Vis fasit ▼";
+  modal.style.display="flex";setTimeout(()=>ans.focus({preventScroll:true}),50);
 }
-function handleAnswer(ok){
+function handle(ok){
   modal.style.display="none";
-  if(ok){
-    score += 10; ui.score.textContent = score;
-    growth += 2; speedMs = Math.max(1000/16, speedMs*0.985);
-    toast("✅ Riktig! +10 og vekst", true, 1200);
-  }else{
-    loseLife("❌ Feil svar");
-  }
-  placeApple(); paused=false;
+  if(ok){scoreVal+=10;ui.score.textContent=scoreVal;growth+=2;speedMs=Math.max(1000/16,speedMs*0.985);toast("✅ Riktig! +10 og vekst",true);}
+  else loseLife("❌ Feil svar");
+  placeApple();paused=false;
 }
-function checkAnswer(){
-  if(!current) return;
-  handleAnswer( norm(ans.value) === norm(current.en) );
-}
-btnCheck.onclick = checkAnswer;
-ans.addEventListener('keydown', e=>{ if(e.key==="Enter") checkAnswer(); });
-btnSkip.onclick = ()=>{ modal.style.display="none"; loseLife("Hoppet over"); placeApple(); paused=false; };
-
-/* ====== Liv / slutt ====== */
-function loseLife(reason){
-  lives--; ui.lives.textContent = "❤".repeat(Math.max(lives,0));
-  toast(`${reason} –1 liv`, false, 1100);
-  if(lives<=0){ return gameOver(); }
-  snake=[{x:Math.floor(cols/2), y:Math.floor(rows/2)}];
-  dir={x:1,y:0}; nextDir={x:1,y:0}; growth=0;
+function check(){if(!current)return;handle(norm(ans.value)===norm(current.en));}
+btnCheck.onclick=check;ans.addEventListener("keydown",e=>{if(e.key==="Enter")check();});
+btnSkip.onclick=()=>{modal.style.display="none";loseLife("Hoppet over");placeApple();paused=false;};
+function loseLife(r){
+  livesVal--;ui.lives.textContent="❤".repeat(Math.max(livesVal,0));toast(`${r} –1 liv`,false);
+  if(livesVal<=0)return gameOver();
+  snake=[{x:Math.floor(cols/2),y:Math.floor(rows/2)}];dir={x:1,y:0};nextDir={x:1,y:0};growth=0;
 }
 function gameOver(){
   paused=true;
-  const best = Number(localStorage.getItem(LS_KEY)||0);
-  if(score>best){ localStorage.setItem(LS_KEY,String(score)); ui.best.textContent = score; }
-  toast(`🕹️ Game over – Poeng: ${score}`, false, 1600);
+  const best=Number(localStorage.getItem(LS_KEY)||0);
+  if(scoreVal>best){localStorage.setItem(LS_KEY,String(scoreVal));ui.best.textContent=scoreVal;}
+  toast(`🕹️ Game over – Poeng: ${scoreVal}`,false,1600);
 }
-
-/* ====== Kontroller ====== */
-function setDir(dx,dy){ if(dx===-dir.x && dy===-dir.y) return; nextDir={x:dx,y:dy}; }
+function setDir(dx,dy){if(dx===-dir.x&&dy===-dir.y)return;nextDir={x:dx,y:dy};}
 window.addEventListener('keydown',e=>{
   const k=e.key.toLowerCase();
-  if(["arrowup","w"].includes(k)) setDir(0,-1);
-  else if(["arrowdown","s"].includes(k)) setDir(0,1);
-  else if(["arrowleft","a"].includes(k)) setDir(-1,0);
-  else if(["arrowright","d"].includes(k)) setDir(1,0);
+  if(["arrowup","w"].includes(k))setDir(0,-1);
+  else if(["arrowdown","s"].includes(k))setDir(0,1);
+  else if(["arrowleft","a"].includes(k))setDir(-1,0);
+  else if(["arrowright","d"].includes(k))setDir(1,0);
 });
-if(ui.up){ ui.up.onclick=()=>setDir(0,-1); ui.down.onclick=()=>setDir(0,1); ui.left.onclick=()=>setDir(-1,0); ui.right.onclick=()=>setDir(1,0); }
-
-/* ====== UI ====== */
-ui.start.onclick = ()=>{
-  speedMs = 1000/Number(ui.speed.value);
-  ui.speedShow.textContent = ui.speed.value;
-  reset();
-};
-ui.pause.onclick = ()=>{
-  paused = !paused;
-  ui.pause.textContent = paused ? "Fortsett" : "Pause";
-};
-ui.speed.addEventListener('input', ()=>{
-  ui.speedShow.textContent = ui.speed.value;
-  speedMs = 1000/Number(ui.speed.value);
-});
-
-/* ====== Boot ====== */
-fitCanvas(); draw();
+if(ui.up){ui.up.onclick=()=>setDir(0,-1);ui.down.onclick=()=>setDir(0,1);
+ui.left.onclick=()=>setDir(-1,0);ui.right.onclick=()=>setDir(1,0);}
+ui.start.onclick=()=>{speedMs=1000/Number(ui.speed.value);ui.speedShow.textContent=ui.speed.value;reset();};
+ui.pause.onclick=()=>{paused=!paused;ui.pause.textContent=paused?"Fortsett":"Pause";};
+ui.speed.addEventListener("input",()=>{ui.speedShow.textContent=ui.speed.value;speedMs=1000/Number(ui.speed.value);});
+fitCanvas();draw();
 </script>
 </body>
 </html>
