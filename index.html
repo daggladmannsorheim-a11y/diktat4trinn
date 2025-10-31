@@ -3,85 +3,85 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Uke 45 • Snake – Gloser (6. trinn, Kampen skole)</title>
+<title>Snake – Gloser (Uke 45, 6. trinn Kampen)</title>
 <style>
   :root{
-    --bg:#0e1220; --panel:#161b2e; --ink:#eef3fb; --muted:#9fb1d1;
-    --acc:#6ee7a2; --bad:#ff6b6b; --line:#223059;
+    --bg:#0c1020; --panel:#151a2b; --ink:#eef3fb; --muted:#a4b1cf;
+    --line:#223059; --good:#42d392; --bad:#ff6b6b; --apple:#ff5a5a;
   }
   *{box-sizing:border-box}
-  html,body{height:100%;margin:0;background:linear-gradient(#0b1224,#0e1220 40%,#0b1020)}
-  body{color:var(--ink);font:16px system-ui,Segoe UI,Roboto,Helvetica,Arial}
-  header{padding:10px 14px;background:rgba(22,27,46,.9);position:sticky;top:0;border-bottom:1px solid var(--line)}
+  html,body{height:100%;margin:0;background:linear-gradient(#0a0f1e,#0c1020)}
+  body{color:var(--ink);font:16px system-ui,Segoe UI,Roboto,Arial}
+  header{position:sticky;top:0;background:rgba(21,26,43,.92);border-bottom:1px solid var(--line);padding:10px 14px}
   h1{margin:0;font-size:18px}
   .muted{color:var(--muted)}
-  .wrap{max-width:960px;margin:8px auto;padding:10px}
-  .grid{display:grid;grid-template-columns:1fr 340px;gap:12px}
+  .wrap{max-width:960px;margin:10px auto;padding:10px}
+  .grid{display:grid;grid-template-columns:1fr 330px;gap:12px}
   @media (max-width:900px){.grid{grid-template-columns:1fr}}
+  #canvasWrap{background:radial-gradient(1100px 480px at 30% -8%,#18234a,#0c1020 60%);border:1px solid var(--line);border-radius:12px;padding:8px}
+  canvas{display:block;width:100%;height:auto;background:#0a1020;border:1px solid #1b274b;border-radius:10px;touch-action:none}
   #ui{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px}
-  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}
-  .chip{display:inline-flex;gap:6px;align-items:center;background:#1a2240;border:1px solid var(--line);border-radius:999px;padding:4px 10px}
-  #prompt{font-weight:700}
-  input[type=text]{width:100%;padding:12px 14px;font-size:18px;border-radius:10px;border:1px solid var(--line);background:#101832;color:var(--ink)}
-  button{appearance:none;background:#1a274b;color:var(--ink);border:1px solid var(--line);padding:10px 12px;border-radius:10px;font-weight:700}
+  .chip{display:inline-flex;gap:6px;align-items:center;background:#1a2240;border:1px solid var(--line);border-radius:999px;padding:4px 10px;margin:4px 6px 0 0}
+  button{appearance:none;background:#1b274b;color:var(--ink);border:1px solid var(--line);padding:10px 12px;border-radius:10px;font-weight:700}
   button:active{transform:translateY(1px)}
   .btn-prim{background:#1b3b2e;border-color:#225a42}
   label.pill{display:inline-flex;gap:8px;align-items:center;background:#1a2240;border:1px solid var(--line);border-radius:999px;padding:6px 10px}
-  input[type=range]{accent-color:#6ee7a2}
-  #canvasWrap{background:radial-gradient(1200px 500px at 30% -5%,#162043,#0e1220 60%);border:1px solid var(--line);border-radius:12px;padding:8px}
-  canvas{display:block;width:100%;height:auto;background:#0a1020;border-radius:8px;border:1px solid #1b274b;touch-action:none}
-  #mob{display:grid;grid-template-columns:64px 64px 64px;gap:10px;justify-content:center;margin-top:10px}
-  #mob button{width:64px;height:64px;font-size:20px}
-  #mob .ghost{visibility:hidden}
-  .good{color:var(--acc)} .bad{color:var(--bad)}
+  input[type=range]{accent-color:#42d392}
+  /* Spørsmåls-modal */
+  #modal{
+    position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:50;
+  }
+  #card{
+    width:min(92vw,460px);background:#0f1734;border:1px solid #2a3a68;border-radius:14px;padding:14px;
+    box-shadow:0 10px 30px rgba(0,0,0,.35)
+  }
+  #qtxt{margin:0 0 8px;font-weight:800}
+  #ans{width:100%;padding:12px 14px;font-size:18px;border-radius:10px;border:1px solid #2a3a68;background:#101833;color:#fff}
+  .row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .good{color:var(--good)} .bad{color:var(--bad)}
 </style>
 </head>
 <body>
 <header>
   <h1>Snake – Gloser • Uke 45</h1>
-  <div class="muted">6. trinn, Kampen skole · Skriv riktig engelsk for norsk glose → slangen vokser</div>
+  <div class="muted">Styr med finger-swipe. Spis <span style="color:var(--apple)">epler</span>. Svar riktig (norsk → engelsk) for å vokse.</div>
 </header>
 
 <div class="wrap grid">
   <div id="canvasWrap">
-    <!-- Canvas skaleres automatisk til skjermbredde (HD internt for skarphet) -->
     <canvas id="game" width="720" height="480" aria-label="Snake-spill"></canvas>
   </div>
-
   <aside id="ui">
-    <div id="prompt">Skriv engelsk for: <span id="norwegian" class="good"></span></div>
-    <div class="row">
-      <input id="answer" type="text" inputmode="latin" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="skriv engelsk og trykk Enter" />
-      <button id="submit" class="btn-prim">Sjekk</button>
-    </div>
-    <div class="row">
-      <span class="chip">Poeng: <strong id="score">0</strong></span>
-      <span class="chip">Runder: <strong id="round">0</strong>/10</span>
-      <span class="chip">Liv: <strong id="lives">❤❤❤</strong></span>
-      <span class="chip">Fart: <strong id="speedShow">7</strong></span>
-      <span class="chip">Topp: <strong id="best">0</strong></span>
+    <div>
+      <span class="chip">Poeng: <b id="score">0</b></span>
+      <span class="chip">Liv: <b id="lives">❤❤❤</b></span>
+      <span class="chip">Fart: <b id="speedShow">7</b></span>
+      <span class="chip">Topp: <b id="best">0</b></span>
     </div>
     <div class="row">
       <button id="start" class="btn-prim">Start / Restart</button>
       <button id="pause">Pause</button>
       <label class="pill">Fart <input id="speed" type="range" min="4" max="16" value="7"></label>
     </div>
-    <p class="muted">Kontroller: Piltaster/WASD eller knappene under. Du kan ikke snu 180° på samme «tick».</p>
-
-    <!-- Mobil D-pad -->
-    <div id="mob">
-      <span class="ghost"></span>
-      <button id="up">⬆️</button>
-      <span class="ghost"></span>
-      <button id="left">⬅️</button>
-      <button id="down">⬇️</button>
-      <button id="right">➡️</button>
-    </div>
+    <p class="muted">Tips: Sveip i ønsket retning. Du kan også bruke piltaster/WASD.</p>
   </aside>
 </div>
 
+<!-- Modal som dukker opp etter eple -->
+<div id="modal">
+  <div id="card">
+    <p id="qtxt">Skriv engelsk for: <span id="norw" class="good"></span></p>
+    <input id="ans" type="text" inputmode="latin" autocomplete="off" autocapitalize="none" spellcheck="false"
+           placeholder="skriv engelsk og trykk Sjekk/Enter">
+    <div class="row">
+      <button id="check" class="btn-prim">Sjekk</button>
+      <button id="skip">Hopp over (−1 liv)</button>
+    </div>
+  </div>
+</div>
+
 <script>
-/* ---------- Uke 45: norsk → engelsk ---------- */
+/* ------- Uke 45 gloser (norsk → engelsk) ------- */
 const PAIRS = [
   {no:"ordentlig", en:"decent"},
   {no:"smil", en:"grin"},
@@ -95,196 +95,176 @@ const PAIRS = [
   {no:"underbukser", en:"knickers"}
 ];
 
-/* ---------- DOM ---------- */
-const canvas = document.getElementById('game');
-const ctx = canvas.getContext('2d');
+/* ------- DOM ------- */
+const cv = document.getElementById('game');
+const ctx = cv.getContext('2d');
 const ui = {
-  norwegian: document.getElementById('norwegian'),
-  answer: document.getElementById('answer'),
-  submit: document.getElementById('submit'),
   score: document.getElementById('score'),
-  round: document.getElementById('round'),
   lives: document.getElementById('lives'),
   best: document.getElementById('best'),
-  start: document.getElementById('start'),
-  pause: document.getElementById('pause'),
   speed: document.getElementById('speed'),
   speedShow: document.getElementById('speedShow'),
-  mobUp: document.getElementById('up'),
-  mobDown: document.getElementById('down'),
-  mobLeft: document.getElementById('left'),
-  mobRight: document.getElementById('right'),
+  start: document.getElementById('start'),
+  pause: document.getElementById('pause')
 };
-const LS_KEY = "snake_uke45_best";
+const modal = document.getElementById('modal');
+const qtxt  = document.getElementById('qtxt');
+const norw  = document.getElementById('norw');
+const ans   = document.getElementById('ans');
+const checkBtn = document.getElementById('check');
+const skipBtn  = document.getElementById('skip');
+const LS_KEY = "snake_touch_uke45_best";
 ui.best.textContent = localStorage.getItem(LS_KEY) || 0;
 
-/* ---------- Responsive canvas (retina) ---------- */
-function fitCanvas(){
-  const rect = canvas.getBoundingClientRect();
-  const ratio = window.devicePixelRatio || 1;
-  const w = Math.floor(rect.width * ratio);
-  const h = Math.floor(rect.height * ratio);
-  if(canvas.width !== w || canvas.height !== h){
-    canvas.width = w; canvas.height = h;
-    cols = Math.floor(w / grid); rows = Math.floor(h / grid);
+/* ------- Responsive canvas ------- */
+let grid = 24, cols = Math.floor(cv.width/grid), rows = Math.floor(cv.height/grid);
+function fit(){
+  const r = cv.getBoundingClientRect();
+  const ratio = window.devicePixelRatio||1;
+  const w = Math.max(480, Math.floor(r.width*ratio));
+  const h = Math.floor(w*2/3); // 3:2-format
+  if(cv.width!==w || cv.height!==h){
+    cv.width=w; cv.height=h;
+    cols = Math.floor(w/grid); rows = Math.floor(h/grid);
   }
 }
-window.addEventListener('resize', fitCanvas);
+window.addEventListener('resize', fit);
 
-/* ---------- Utilities ---------- */
+/* ------- Utils ------- */
 const rand = n => Math.floor(Math.random()*n);
-function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=rand(i+1); [a[i],a[j]]=[a[j],a[i]];} return a}
-function flash(msg, good=true, t=900){
-  const bar = document.createElement('div');
-  bar.textContent = msg;
-  bar.style.position="fixed"; bar.style.left="50%"; bar.style.top="12px";
-  bar.style.transform="translateX(-50%)";
-  bar.style.background= good ? "#1f503a" : "#5b2230";
-  bar.style.color="#fff"; bar.style.padding="10px 14px"; bar.style.borderRadius="10px";
-  bar.style.border="1px solid rgba(255,255,255,.15)"; bar.style.zIndex=9999;
-  document.body.appendChild(bar); setTimeout(()=>bar.remove(), t);
+function flash(msg, ok=true, t=900){
+  const el=document.createElement('div');
+  el.textContent=msg;
+  el.style.position="fixed"; el.style.left="50%"; el.style.top="12px";
+  el.style.transform="translateX(-50%)";
+  el.style.background = ok ? "#184d3a" : "#5a2230";
+  el.style.color="#fff"; el.style.padding="10px 14px"; el.style.borderRadius="10px";
+  el.style.border="1px solid rgba(255,255,255,.15)"; el.style.zIndex=99;
+  document.body.appendChild(el); setTimeout(()=>el.remove(), t);
 }
-function norm(s){ return s.trim().toLowerCase().replace(/\s+/g," "); }
+const norm = s => s.trim().toLowerCase().replace(/\s+/g," ");
 
-/* ---------- Game state ---------- */
-let grid = 24, cols = Math.floor(canvas.width/grid), rows = Math.floor(canvas.height/grid);
-let loopId=null, paused=true, speedMs = 1000/Number(ui.speed.value), lastTick=0;
+/* ------- State ------- */
+let snake, dir, nextDir, apple, score, lives, paused=true, loopId=null, lastTick=0, speedMs=1000/7;
+let pendingGrowth=0, currentWord=null;
 
-let snake, dir, nextDir, score, lives, round, growthPending, used, bonusStar;
-
-/* ---------- Round & word logic ---------- */
-function newRound(){
-  round++; ui.round.textContent = Math.min(round,10);
-  if(used.length===PAIRS.length) used=[];
-  const remaining = PAIRS.filter(p=>!used.includes(p.no));
-  const pick = remaining[rand(remaining.length)];
-  used.push(pick.no);
-  ui.norwegian.textContent = pick.no;
-  ui.answer.value = "";
-  ui.answer.placeholder = "engelsk for «" + pick.no + "»";
-  ui.answer.focus({preventScroll:true});
-  currentCorrect = pick.en;
-}
-let currentCorrect = "";
-
-/* ---------- Core reset ---------- */
-function reset(){
-  paused=false; lastTick=0;
-  snake=[{x:Math.floor(cols/2), y:Math.floor(rows/2)}];
-  dir={x:1,y:0}; nextDir={x:1,y:0};
-  score=0; lives=3; round=0; used=[]; growthPending=0; bonusStar=null;
-  ui.score.textContent=score; ui.lives.textContent="❤❤❤";
-  newRound(); draw(); cancelAnimationFrame(loopId); loopId=requestAnimationFrame(tick);
-}
-
-/* ---------- Board helpers ---------- */
+/* ------- Init/reset ------- */
 function freeCell(){
-  let x,y,tries=0;
+  let x,y,t=0;
   do{
-    x = rand(cols); y = rand(rows); tries++;
-    if(tries>500) break;
-  } while( snake.some(s=>s.x===x&&s.y===y) || (bonusStar && bonusStar.x===x && bonusStar.y===y) );
+    x=rand(cols); y=rand(rows); t++;
+    if(t>500) break;
+  }while(snake.some(s=>s.x===x&&s.y===y));
   return {x,y};
 }
-
-/* ---------- Drawing ---------- */
-function draw(){
-  // bg grid
-  ctx.fillStyle="#0a1020"; ctx.fillRect(0,0,canvas.width,canvas.height);
-  ctx.strokeStyle="rgba(34,48,89,.6)"; ctx.lineWidth=1;
-  for(let i=0;i<=cols;i++){ ctx.beginPath(); ctx.moveTo(i*grid,0); ctx.lineTo(i*grid,canvas.height); ctx.stroke(); }
-  for(let j=0;j<=rows;j++){ ctx.beginPath(); ctx.moveTo(0,j*grid); ctx.lineTo(canvas.width,j*grid); ctx.stroke(); }
-
-  // bonus star (ekstra poeng, frivillig)
-  if(bonusStar){
-    ctx.fillStyle="rgba(255,215,0,.25)";
-    ctx.fillRect(bonusStar.x*grid+1, bonusStar.y*grid+1, grid-2, grid-2);
-    ctx.fillStyle="#ffd700";
-    ctx.font = "bold 14px system-ui"; ctx.textAlign="center"; ctx.textBaseline="middle";
-    ctx.fillText("★", bonusStar.x*grid+grid/2, bonusStar.y*grid+grid/2);
-  }
-
-  // snake
-  ctx.fillStyle="#79c8ff";
-  for(let i=0;i<snake.length;i++){
-    const s=snake[i], x=s.x*grid, y=s.y*grid;
-    ctx.fillRect(x+2,y+2,grid-4,grid-4);
-    if(i===0){ ctx.fillStyle="#0b1020"; ctx.fillRect(x+6,y+8,3,3); ctx.fillRect(x+grid-9,y+8,3,3); ctx.fillStyle="#79c8ff"; }
-  }
+function placeApple(){ apple = freeCell(); }
+function reset(){
+  fit(); lastTick=0; paused=false;
+  snake=[{x:Math.floor(cols/2),y:Math.floor(rows/2)}];
+  dir={x:1,y:0}; nextDir={x:1,y:0};
+  score=0; lives=3; pendingGrowth=0; placeApple();
+  ui.score.textContent=score; ui.lives.textContent="❤❤❤";
+  cancelAnimationFrame(loopId); draw(); loopId=requestAnimationFrame(tick);
 }
 
-/* ---------- Game loop ---------- */
+/* ------- Drawing ------- */
+function draw(){
+  ctx.fillStyle="#0a1020"; ctx.fillRect(0,0,cv.width,cv.height);
+  ctx.strokeStyle="rgba(34,48,89,.6)"; ctx.lineWidth=1;
+  for(let i=0;i<=cols;i++){ ctx.beginPath(); ctx.moveTo(i*grid,0); ctx.lineTo(i*grid,cv.height); ctx.stroke(); }
+  for(let j=0;j<=rows;j++){ ctx.beginPath(); ctx.moveTo(0,j*grid); ctx.lineTo(cv.width,j*grid); ctx.stroke(); }
+  // apple
+  if(apple){
+    ctx.fillStyle="rgba(255,90,90,.25)";
+    ctx.fillRect(apple.x*grid+1,apple.y*grid+1,grid-2,grid-2);
+    ctx.fillStyle="var(--apple)"; ctx.font="bold 14px system-ui"; ctx.textAlign="center"; ctx.textBaseline="middle";
+    ctx.fillText("🍎", apple.x*grid+grid/2, apple.y*grid+grid/2);
+  }
+  // snake
+  ctx.fillStyle="#79c8ff";
+  snake.forEach((s,i)=>{
+    const x=s.x*grid, y=s.y*grid;
+    ctx.fillRect(x+2,y+2,grid-4,grid-4);
+    if(i===0){ ctx.fillStyle="#0b1020"; ctx.fillRect(x+6,y+8,3,3); ctx.fillRect(x+grid-9,y+8,3,3); ctx.fillStyle="#79c8ff"; }
+  });
+}
+
+/* ------- Loop ------- */
 function tick(ts){
-  fitCanvas();
+  fit();
   if(paused){ draw(); loopId=requestAnimationFrame(tick); return; }
-  if(ts - lastTick < speedMs){ loopId=requestAnimationFrame(tick); return; }
+  if(ts-lastTick < speedMs){ loopId=requestAnimationFrame(tick); return; }
   lastTick = ts;
 
-  // apply direction (no 180 flip in same tick)
-  if( (nextDir.x!==-dir.x) || (nextDir.y!==-dir.y) ) dir = nextDir;
+  if((nextDir.x!==-dir.x)||(nextDir.y!==-dir.y)) dir=nextDir;
+  const head={...snake[0]}; head.x+=dir.x; head.y+=dir.y;
 
-  const head = {...snake[0]};
-  head.x += dir.x; head.y += dir.y;
-
-  // walls
-  if(head.x<0||head.y<0||head.x>=cols||head.y>=rows){ loseLife("Traff veggen"); return loopId=requestAnimationFrame(tick); }
-  // self
-  if(snake.some(p=>p.x===head.x && p.y===head.y)){ loseLife("Traff halen"); return loopId=requestAnimationFrame(tick); }
+  // walls / self
+  if(head.x<0||head.y<0||head.x>=cols||head.y>=rows){ loseLife("Veggen"); return loopId=requestAnimationFrame(tick); }
+  if(snake.some(p=>p.x===head.x&&p.y===head.y)){ loseLife("Halen"); return loopId=requestAnimationFrame(tick); }
 
   snake.unshift(head);
 
-  // growth or not
-  if(growthPending>0){ growthPending--; } else { snake.pop(); }
-
-  // bonus
-  if(bonusStar && head.x===bonusStar.x && head.y===bonusStar.y){
-    score += 5; ui.score.textContent=score; growthPending += 1; bonusStar=null; flash("+5 bonus ★", true);
+  // apple?
+  if(apple && head.x===apple.x && head.y===apple.y){
+    paused=true; askQuestion(); // growth bestemmes av svaret
+  }else{
+    if(pendingGrowth>0) pendingGrowth--; else snake.pop();
   }
 
   draw(); loopId=requestAnimationFrame(tick);
 }
 
+/* ------- Question flow ------- */
+function pickWord(){
+  return PAIRS[rand(PAIRS.length)];
+}
+function askQuestion(){
+  currentWord = pickWord();
+  norw.textContent = currentWord.no;
+  ans.value=""; modal.style.display="flex"; ans.focus({preventScroll:true});
+}
+function applyAnswer(ok){
+  modal.style.display="none";
+  if(ok){
+    score+=10; ui.score.textContent=score;
+    pendingGrowth+=2; // vokser
+    speedMs=Math.max(1000/16, speedMs*0.985);
+    flash("Riktig! +10 og vekst", true);
+  }else{
+    loseLife("Feil svar");
+  }
+  placeApple(); paused=false;
+}
+function check(){
+  if(!currentWord) return;
+  const ok = norm(ans.value) === norm(currentWord.en);
+  applyAnswer(ok);
+}
+checkBtn.onclick = check;
+ans.addEventListener('keydown',e=>{ if(e.key==="Enter") check(); });
+skipBtn.onclick = ()=>{ // hopp over: −1 liv
+  modal.style.display="none"; loseLife("Hoppet over");
+  placeApple(); paused=false;
+};
+
+/* ------- Lives & end ------- */
 function loseLife(reason){
-  lives--; ui.lives.textContent = "❤".repeat(Math.max(lives,0));
+  lives--; ui.lives.textContent="❤".repeat(Math.max(lives,0));
   flash(`${reason}! -1 liv`, false, 1100);
   if(lives<=0){ gameOver(); return; }
-  // soft reset of snake pos
-  snake=[{x:Math.floor(cols/2), y:Math.floor(rows/2)}];
-  dir={x:1,y:0}; nextDir={x:1,y:0};
-  growthPending=0;
+  // myk reset
+  snake=[{x:Math.floor(cols/2),y:Math.floor(rows/2)}];
+  dir={x:1,y:0}; nextDir={x:1,y:0}; pendingGrowth=0;
 }
-
-/* ---------- End ---------- */
 function gameOver(){
   paused=true;
-  const best = Number(localStorage.getItem(LS_KEY)||0);
+  const best=Number(localStorage.getItem(LS_KEY)||0);
   if(score>best){ localStorage.setItem(LS_KEY,String(score)); ui.best.textContent=score; }
   flash(`Game over! Poeng: ${score}`, false, 1600);
 }
 
-/* ---------- Answer checking (type to grow) ---------- */
-function checkAnswer(){
-  const user = norm(ui.answer.value);
-  const corr = norm(currentCorrect);
-  if(!user) return;
-  if(user===corr){
-    score += 10; ui.score.textContent = score;
-    growthPending += 2;                     // slangen vokser (2 ruter)
-    if(Math.random()<0.5) bonusStar = freeCell(); // av og til dukker bonus-stjerne opp
-    // litt fortere etter riktig svar
-    speedMs = Math.max(1000/16, speedMs*0.98);
-    flash("Riktig! +10 og vekst", true);
-    newRound();
-  }else{
-    loseLife("Feil svar");
-  }
-}
-ui.submit.onclick = checkAnswer;
-ui.answer.addEventListener('keydown', e=>{
-  if(e.key==="Enter") checkAnswer();
-});
-
-/* ---------- Controls ---------- */
+/* ------- Controls: tastatur + finger-swipe ------- */
 function setDir(dx,dy){ if(dx===-dir.x && dy===-dir.y) return; nextDir={x:dx,y:dy}; }
 window.addEventListener('keydown',e=>{
   const k=e.key.toLowerCase();
@@ -293,25 +273,29 @@ window.addEventListener('keydown',e=>{
   else if(["arrowleft","a"].includes(k)) setDir(-1,0);
   else if(["arrowright","d"].includes(k)) setDir(1,0);
 });
-ui.mobUp.onclick = ()=>setDir(0,-1);
-ui.mobDown.onclick = ()=>setDir(0,1);
-ui.mobLeft.onclick = ()=>setDir(-1,0);
-ui.mobRight.onclick = ()=>setDir(1,0);
-
-ui.speed.addEventListener('input',()=>{
-  ui.speedShow.textContent = ui.speed.value;
-  speedMs = 1000/Number(ui.speed.value);
+let touchStart=null;
+cv.addEventListener('touchstart',e=>{
+  const t=e.changedTouches[0]; touchStart={x:t.clientX,y:t.clientY,time:Date.now()};
+},{passive:true});
+cv.addEventListener('touchmove',e=>{ e.preventDefault(); },{passive:false});
+cv.addEventListener('touchend',e=>{
+  if(!touchStart) return;
+  const t=e.changedTouches[0];
+  const dx=t.clientX-touchStart.x, dy=t.clientY-touchStart.y;
+  const adx=Math.abs(dx), ady=Math.abs(dy);
+  const thresh=24; // kort swipe er nok
+  if(adx<thresh && ady<thresh) return;
+  if(adx>ady) setDir(dx>0?1:-1,0); else setDir(0, dy>0?1:-1);
+  touchStart=null;
 });
-ui.start.onclick = ()=> reset();
-ui.pause.onclick = ()=>{
-  paused = !paused; ui.pause.textContent = paused ? "Fortsett" : "Pause";
-};
-ui.answer.addEventListener('focus', ()=>{ /* på mobil: skjermtastatur */ });
 
-/* ---------- Boot ---------- */
-fitCanvas();
-paused=true; // vis brett, start når Start trykkes
-draw();
+/* ------- UI ------- */
+ui.start.onclick = ()=>{ speedMs=1000/Number(ui.speed.value); ui.speedShow.textContent=ui.speed.value; reset(); };
+ui.pause.onclick = ()=>{ paused=!paused; ui.pause.textContent=paused?"Fortsett":"Pause"; };
+ui.speed.addEventListener('input',()=>{ ui.speedShow.textContent=ui.speed.value; speedMs=1000/Number(ui.speed.value); });
+
+/* ------- Boot ------- */
+fit(); draw(); // venter på Start
 </script>
 </body>
 </html>
