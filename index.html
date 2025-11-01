@@ -1,431 +1,312 @@
 <!doctype html>
 <html lang="nb">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover" />
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="screen-orientation" content="landscape">
 <title>Snake – Gloser uke 45 (Kampen 6. trinn)</title>
 <style>
-  :root{ --bg:#0c1020; --panel:#151a2b; --ink:#eef3fb; --muted:#9fb1d1; --line:#223059;
-         --good:#42d392; --bad:#ff6b6b; --head:56px; }
-  *{box-sizing:border-box}
-  html,body{height:100vh;margin:0;background:#0c1020;color:var(--ink);font:16px system-ui,Segoe UI,Roboto,Arial}
-  header{padding:8px 12px;background:rgba(21,26,43,.95);border-bottom:1px solid var(--line);position:sticky;top:0;text-align:center}
-  h1{margin:0;font-size:18px}
-  .muted{color:var(--muted);font-size:14px}
+:root{
+  --bg:#0c1020;--panel:#151a2b;--ink:#eef3fb;--muted:#9fb1d1;
+  --line:#223059;--good:#42d392;--bad:#ff6b6b;--apple:#ff5a5a;--accent:#1b3b2e;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#0c1020;color:var(--ink);font:16px system-ui,Segoe UI,Roboto,Arial;overflow:hidden}
+header{position:sticky;top:0;background:rgba(21,26,43,.95);border-bottom:1px solid var(--line);padding:8px 14px;text-align:center}
+h1{margin:0;font-size:18px}.muted{color:var(--muted)}
+.wrap{max-width:960px;margin:auto;padding:6px}
+#canvasWrap{background:radial-gradient(1000px 480px at 30% -8%,#18234a,#0c1020 60%);border:1px solid var(--line);border-radius:12px;padding:6px;margin:auto}
+canvas{display:block;width:100%;height:auto;background:#0a1020;border:1px solid #1b274b;border-radius:10px;touch-action:none}
 
-  .wrap{padding:8px;display:flex;flex-direction:column;gap:8px}
+#mobControls{display:grid;place-items:center;margin-top:8px}
+#mobControls .row{display:flex;gap:14px;justify-content:center;margin-top:6px}
+#mobControls button{width:70px;height:70px;font-size:30px;border-radius:14px;background:#1a274b;color:#fff;border:1px solid #223059;}
+#mobControls button:active{transform:scale(.95)}
+@media(min-width:900px){#mobControls{display:none}}
 
-  #canvasWrap{
-    position:relative;
-    background: radial-gradient(900px 420px at 30% -8%, #18234a, #0c1020 60%);
-    border:1px solid var(--line); border-radius:12px; padding:6px;
-    display:flex; align-items:center; justify-content:center; min-height:0;
-  }
-  #game{
-    width:100%; height:auto; aspect-ratio:3/2; background:#0a1020;
-    border:1px solid #1b274b; border-radius:10px; touch-action:none; display:block;
-  }
-  #startOverlay{
-    position:absolute; inset:6px; display:flex; align-items:center; justify-content:center;
-    background:rgba(0,0,0,.35); border-radius:10px; z-index:5; pointer-events:none;
-  }
-  #bigStart{
-    pointer-events:auto; font-size:clamp(18px,5vw,26px); padding:14px 20px; border-radius:12px;
-    background:#1b3b2e; color:#fff; border:1px solid #225a42; font-weight:800;
-  }
+#ui{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px;text-align:center;margin-top:8px}
+.chip{display:inline-flex;gap:6px;align-items:center;background:#1a2240;border:1px solid var(--line);border-radius:999px;padding:4px 10px;margin:2px 3px;font-size:15px}
+button{appearance:none;background:#1b274b;color:var(--ink);border:1px solid var(--line);padding:8px 12px;border-radius:10px;font-weight:700;font-size:15px;cursor:pointer}
+button:active{transform:translateY(1px)}
+.btn-prim{background:var(--accent);border-color:#225a42}
+.btn-toggle.on{background:#2a5f49}
 
-  #thumbpad{display:grid; place-items:center; gap:8px; user-select:none}
-  #thumbpad .row{display:flex; gap:10px; justify-content:center}
-  #thumbpad button{
-    width:min(20vw,78px); height:min(20vw,78px);
-    max-width:84px; max-height:84px;
-    font-size:clamp(20px,6.5vw,30px); border-radius:12px;
-    background:#1b274b; color:#fff; border:1px solid var(--line); font-weight:800;
-  }
-  @media (max-width:420px){
-    #thumbpad button{ width:62px; height:62px; font-size:24px; border-radius:10px }
-  }
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:50}
+#card{width:min(92vw,480px);background:#0f1734;border:1px solid #2a3a68;border-radius:14px;padding:14px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+#ans{width:100%;padding:12px 14px;font-size:18px;border-radius:10px;border:1px solid #2a3a68;background:#101833;color:#fff}
+.row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;justify-content:center}
+.good{color:var(--good)}.bad{color:var(--bad)}
+#hint{display:none;margin-top:6px;color:var(--muted);font-style:italic}
+#ghost{margin-top:6px;font-family:ui-monospace, SFMono-Regular, Menlo, monospace;font-size:16px}
+#ghost .done{color:#a6f3c4}
+#ghost .todo{color:#9fb1d1}
 
-  .under{padding:4px 8px 12px}
-  #meta{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
-  .chip{display:inline-flex;gap:6px;align-items:center;background:#1a2240;border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-size:14px}
-  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-  button{appearance:none;background:#1b274b;color:var(--ink);border:1px solid var(--line);padding:8px 12px;border-radius:10px;font-weight:700;font-size:15px}
-  button:active{transform:translateY(1px)} .btn-prim{background:#1b3b2e;border-color:#225a42}
-  label.pill{display:inline-flex;align-items:center;gap:6px;background:#1a2240;border:1px solid var(--line);border-radius:999px;padding:5px 10px;font-size:14px}
-
-  /* Liten blipp ved poengfeltet */
-  #scoreBlip{
-    margin-left:6px; font-weight:800; opacity:0; transition:transform .25s ease, opacity .25s ease;
-  }
-  #scoreBlip.show{ opacity:1; transform:translateY(-6px) }
-
-  #modal{position:fixed; inset:0; background:rgba(0,0,0,.55); display:none; align-items:center; justify-content:center; z-index:50; padding:10px}
-  #card{width:min(94vw,620px); background:#0f1734; border:1px solid #2a3a68; border-radius:14px; padding:14px; box-shadow:0 10px 30px rgba(0,0,0,.35)}
-  .qTitle{margin:0 0 8px; font-size:clamp(18px,3.8vw,22px); font-weight:800}
-  #ans{width:100%; padding:12px 14px; font-size:18px; border-radius:10px; border:1px solid #2a3a68; background:#101833; color:#fff}
-  .good{color:var(--good)} .bad{color:var(--bad)}
-  .qRow{display:flex; gap:8px; align-items:center; margin-top:10px}
-  .qRow .left{display:flex; gap:8px; flex-wrap:wrap}
-  .qRow .right{margin-left:auto}
-  #qFasit{display:none; margin-top:10px; max-height:40vh; overflow:auto; border:1px solid #2a3a68; border-radius:10px}
-  table{width:100%; border-collapse:collapse; font-size:15px}
-  th,td{border:1px solid #2a3a68; padding:6px 8px; text-align:left}
-  th{background:#1a2240}
-
-  @media (max-width:420px){
-    header h1{font-size:16px}
-    .chip{font-size:12px; padding:3px 8px}
-    button{font-size:14px; padding:7px 10px}
-    #ans{font-size:17px}
-  }
+#fasitWrap{margin-top:12px;text-align:center}
+table{width:100%;border-collapse:collapse;font-size:15px;margin-top:6px}
+th,td{border:1px solid #2a3a68;padding:6px 8px;text-align:left}
+th{background:#1a2240}
 </style>
 </head>
 <body>
 <header>
   <h1>Snake – Gloser • Uke 45</h1>
-  <div class="muted">Hei 6. trinn på Kampen skole! Kos dere med glosespill – lær, spill og ha det gøy 🍎🐍</div>
+  <div class="muted">Spis 🍎 for spørsmål. Svar riktig for å vokse – mobil og PC.</div>
 </header>
 
-<section class="wrap">
-  <div id="canvasWrap">
-    <canvas id="game" width="900" height="600" aria-label="Snake-spill"></canvas>
-    <div id="startOverlay"><button id="bigStart" type="button">Start spillet</button></div>
-  </div>
+<div class="wrap" id="canvasWrap">
+  <canvas id="game" width="720" height="480"></canvas>
+</div>
 
-  <div id="thumbpad" aria-label="Piltaster">
-    <div class="row"><button id="up"   type="button">⬆️</button></div>
-    <div class="row">
-      <button id="left"  type="button">⬅️</button>
-      <button id="down"  type="button">⬇️</button>
-      <button id="right" type="button">➡️</button>
-    </div>
-  </div>
-</section>
-
-<section class="under">
-  <div id="meta">
-    <span class="chip">Poeng: <b id="score">0</b><span id="scoreBlip"></span></span>
-    <span class="chip">Liv: <b id="lives">❤❤❤</b></span>
-    <span class="chip">Fart: <b id="speedShow">6</b></span>
-    <span class="chip">Topp: <b id="best">0</b></span>
-    <span class="chip">Oppgaver igjen: <b id="remain">10</b></span>
-  </div>
+<!-- Mobil piltaster -->
+<div id="mobControls">
+  <div class="row"><button id="up">⬆️</button></div>
   <div class="row">
-    <button id="start" type="button" class="btn-prim">Start / Restart</button>
-    <button id="pause" type="button">Pause</button>
-    <label style="display:flex;align-items:center;gap:6px">Fart
-      <input id="speed" type="range" min="4" max="16" value="6" />
-    </label>
-    <label class="pill"><input type="checkbox" id="assist"> Lett å treffe (magnet)</label>
+    <button id="left">⬅️</button>
+    <button id="down">⬇️</button>
+    <button id="right">➡️</button>
   </div>
-</section>
+</div>
 
+<!-- Info / styring -->
+<div id="ui">
+  <span class="chip">Poeng: <b id="score">0</b></span>
+  <span class="chip">Liv: <b id="lives">❤❤❤</b></span>
+  <span class="chip">Fart: <b id="speedShow">7</b></span>
+  <span class="chip">Topp: <b id="best">0</b></span><br>
+  <button id="start" class="btn-prim">Start / Restart</button>
+  <button id="pause">Pause</button>
+  <input id="speed" type="range" min="4" max="16" value="7" style="vertical-align:middle">
+  <br>
+  <button id="beginner" class="btn-toggle">Nybegynner (feilfri): AV</button>
+</div>
+
+<!-- Fasit (full liste) -->
+<div id="fasitWrap" class="wrap">
+  <button id="toggleFasit" class="btn-prim">Vis fasit ▼</button>
+  <div id="fasit" style="display:none"></div>
+</div>
+
+<!-- Spørsmål -->
 <div id="modal">
   <div id="card">
-    <div id="questionView">
-      <p class="qTitle">Skriv <span class="good">engelsk</span> for: <span id="norw" class="good"></span></p>
-      <input id="ans" type="text" inputmode="latin" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="skriv engelsk og trykk Enter/Sjekk" />
-      <div class="qRow">
-        <div class="left">
-          <button id="check" type="button" class="btn-prim">Sjekk</button>
-          <button id="skip"  type="button">Hopp over (–1 liv)</button>
-        </div>
-        <div class="right">
-          <button id="toggleQFasit" type="button">Vis fasit ▼</button>
-        </div>
-      </div>
-      <div id="qFasit"></div>
-    </div>
-
-    <div id="summaryView" style="display:none">
-      <h3 style="margin:0 0 8px">Oppsummering</h3>
-      <div id="summaryText" style="margin-bottom:10px"></div>
-      <button id="restartAll" type="button" class="btn-prim">Spill igjen</button>
+    <p>Skriv engelsk for: <span id="norw" class="good"></span></p>
+    <div id="ghost"></div>
+    <input id="ans" type="text" inputmode="latin" autocomplete="off" autocapitalize="none" spellcheck="false">
+    <div id="hint"></div>
+    <div class="row">
+      <button id="check" class="btn-prim">Sjekk</button>
+      <button id="showHint">Vis fasit</button>
+      <button id="skip">Hopp over</button>
     </div>
   </div>
 </div>
 
 <script>
-/* ====== Konstanter for poeng ====== */
-const POINT_NOFASIT = 10;
-const POINT_FASIT   = 5;
-
-/* ====== Gloser uke 45 ====== */
-const PAIRS = [
-  {en:"Decent", no:"ordentlig"},
-  {en:"Grin", no:"smil"},
-  {en:"Terrified", no:"veldig redd"},
-  {en:"Wailed", no:"gråt"},
-  {en:"Yelping", no:"bjeffende"},
-  {en:"Leer", no:"sultent blikk"},
-  {en:"Furry coat", no:"pelskåpe"},
-  {en:"Flickers", no:"blunker i rykninger"},
-  {en:"Whips out", no:"trekker frem"},
-  {en:"Knickers", no:"underbukser"}
+/* --- Gloser uke 45 --- */
+const PAIRS=[
+ {en:"Decent",no:"ordentlig"},
+ {en:"Grin",no:"smil"},
+ {en:"Terrified",no:"veldig redd"},
+ {en:"Wailed",no:"gråt"},
+ {en:"Yelping",no:"bjeffende"},
+ {en:"Leer",no:"sultent blikk"},
+ {en:"Furry coat",no:"pelskåpe"},
+ {en:"Flickers",no:"blunker i rykninger"},
+ {en:"Whips out",no:"trekker frem"},
+ {en:"Knickers",no:"underbukser"}
 ];
 
-/* ====== DOM helpers ====== */
-const $ = id => document.getElementById(id);
-const cv = $('game'), ctx = cv.getContext('2d');
-const ui = {
-  score:$('score'), scoreBlip:$('scoreBlip'),
-  lives:$('lives'), best:$('best'),
-  speed:$('speed'), speedShow:$('speedShow'),
-  start:$('start'), pause:$('pause'),
-  up:$('up'), down:$('down'), left:$('left'), right:$('right'),
-  remain:$('remain'), bigStart:$('bigStart'),
-  startOverlay:$('startOverlay'), assist:$('assist')
+/* Full fasit-tabell (engelsk → norsk) */
+const f=document.getElementById("fasit");
+f.innerHTML=`<table><tr><th>Engelsk</th><th>Norsk</th></tr>${PAIRS.map(p=>`<tr><td>${p.en}</td><td>${p.no}</td></tr>`).join("")}</table>`;
+document.getElementById("toggleFasit").onclick=(e)=>{
+  const open=f.style.display==="none";f.style.display=open?"block":"none";
+  e.target.textContent=open?"Skjul fasit ▲":"Vis fasit ▼";
 };
-const modal=$('modal'), questionView=$('questionView'), summaryView=$('summaryView'),
-      summaryText=$('summaryText'), restartAll=$('restartAll'),
-      norw=$('norw'), ans=$('ans'), btnCheck=$('check'), btnSkip=$('skip'),
-      btnToggleQFasit=$('toggleQFasit'), qFasitDiv=$('qFasit');
 
-const LS_KEY="snake45_best_mobile_thumbpad_points";
-ui.best.textContent = localStorage.getItem(LS_KEY) || 0;
+/* --- DOM --- */
+const cv=document.getElementById('game'),ctx=cv.getContext('2d');
+const ui={score:document.getElementById('score'),lives:document.getElementById('lives'),
+  best:document.getElementById('best'),speed:document.getElementById('speed'),
+  speedShow:document.getElementById('speedShow'),start:document.getElementById('start'),
+  pause:document.getElementById('pause'), beginner:document.getElementById('beginner')};
+const modal=document.getElementById('modal'),norw=document.getElementById('norw'),
+ans=document.getElementById('ans'),checkBtn=document.getElementById('check'),
+skipBtn=document.getElementById('skip'),hint=document.getElementById('hint'),
+showHint=document.getElementById('showHint'), ghost=document.getElementById('ghost');
+const LS_KEY="snake45_best";ui.best.textContent=localStorage.getItem(LS_KEY)||0;
 
-/* ====== Fasit-tabell ====== */
-qFasitDiv.innerHTML = `<table>
-  <tr><th>Engelsk</th><th>Norsk</th></tr>
-  ${PAIRS.map(p=>`<tr><td>${p.en}</td><td>${p.no}</td></tr>`).join('')}
-</table>`;
-
-/* ====== Canvas sizing + grid ====== */
-let gridBase = (window.innerWidth <= 480) ? 30 : 26;
-let grid = gridBase, cols = Math.floor(cv.width / grid), rows = Math.floor(cv.height / grid);
-
-function fitCanvas(){
-  const wrap = document.getElementById('canvasWrap');
-  const bw = wrap.clientWidth - 12;
-  const vw = Math.min(bw, 1200);
-  const vh = Math.round(vw * 2/3);
-  cv.style.width = vw + 'px';
-  cv.style.height = vh + 'px';
-  const ratio = window.devicePixelRatio || 1;
-  const w = Math.floor(vw * ratio), h = Math.floor(vh * ratio);
-  if (cv.width !== w || cv.height !== h){
-    cv.width = w; cv.height = h; cols = Math.floor(w / grid); rows = Math.floor(h / grid);
-  }
+/* --- Canvas resize --- */
+let grid=24,cols=Math.floor(cv.width/grid),rows=Math.floor(cv.height/grid);
+function fit(){
+  const r=cv.getBoundingClientRect(),ratio=window.devicePixelRatio||1;
+  const w=Math.floor(r.width*ratio),h=Math.floor(w*2/3);
+  if(cv.width!==w||cv.height!==h){cv.width=w;cv.height=h;cols=Math.floor(w/grid);rows=Math.floor(h/grid);}
 }
-window.addEventListener('resize', ()=>{
-  gridBase = (window.innerWidth <= 480) ? 30 : 26;
-  grid = gridBase; fitCanvas();
-});
+window.addEventListener('resize',fit);
 
-/* ====== Utils ====== */
-const rand = n => Math.floor(Math.random()*n);
-const norm = s => s.trim().toLowerCase().replace(/\s+/g," ");
-function toast(msg, ok=true, t=1100){
-  const e=document.createElement('div');
-  e.textContent=msg; e.style.position="fixed"; e.style.left="50%"; e.style.top="50%";
-  e.style.transform="translate(-50%,-50%)"; e.style.background= ok ? "#1f503a" : "#5b2230";
-  e.style.color="#fff"; e.style.padding="12px 16px"; e.style.borderRadius="12px";
-  e.style.fontSize="20px"; e.style.fontWeight="800"; e.style.boxShadow="0 0 20px rgba(0,0,0,.5)"; e.style.zIndex=200;
-  document.body.appendChild(e); setTimeout(()=>e.remove(), t);
-}
-function blip(scoreGain){
-  ui.scoreBlip.textContent = scoreGain>0 ? `+${scoreGain}` : '';
-  ui.scoreBlip.style.color = scoreGain===POINT_NOFASIT ? '#42d392' : '#ffbb55';
-  ui.scoreBlip.classList.remove('show');
-  void ui.scoreBlip.offsetWidth; // reflow
-  ui.scoreBlip.classList.add('show');
-  setTimeout(()=>ui.scoreBlip.classList.remove('show'), 500);
+/* --- Utils --- */
+const rand=n=>Math.floor(Math.random()*n);
+const norm=s=>s.trim().toLowerCase().replace(/\s+/g," ");
+function flash(msg,ok=true,t=900){
+  const e=document.createElement('div');e.textContent=msg;
+  e.style.position="fixed";e.style.left="50%";e.style.top="12px";e.style.transform="translateX(-50%)";
+  e.style.background=ok?"#1f503a":"#5b2230";e.style.color="#fff";e.style.padding="10px 14px";
+  e.style.borderRadius="10px";e.style.border="1px solid rgba(255,255,255,.15)";e.style.zIndex=99;
+  document.body.appendChild(e);setTimeout(()=>e.remove(),t);
 }
 
-/* ====== Spilltilstand ====== */
-let snake, dir, nextDir, score=0, lives=3, paused=true, loopId=null, lastTick=0,
-    speedMs = 1000/6, growth=0;
-let apples = []; // {x,y,index,done:false}
+/* --- Game state --- */
+let snake,dir,nextDir,apple,scoreVal,livesVal,paused=true,loopId=null,lastTick=0,speedMs=1000/7,growth=0,current=null,usedHint=false,beginner=false;
 
-/* Statistikk */
-let currentIndex = null, usedFasitThisRound = false;
-let correctCount=0, wrongCount=0, withFasitAttempts=0, withoutFasitAttempts=0;
-
-/* ====== Epler (ett per glose) ====== */
-function freeCell(){
-  let x,y,tries=0;
-  do{
-    x=rand(cols); y=rand(rows); tries++; if(tries>2000) break;
-  }while(
-    (snake && snake.some(s=>s.x===x&&s.y===y)) ||
-    apples.some(a=>!a.done && a.x===x && a.y===y)
-  );
-  return {x,y};
-}
-function placeAllApples(){
-  apples = [];
-  for(let i=0;i<PAIRS.length;i++){
-    const {x,y} = freeCell();
-    apples.push({x,y,index:i,done:false});
-  }
-  ui.remain.textContent = apples.filter(a=>!a.done).length;
-}
-
-/* ====== Reset ====== */
-function resetStats(){ correctCount=0; wrongCount=0; withFasitAttempts=0; withoutFasitAttempts=0; }
+/* --- Start/reset --- */
+function freeCell(){let x,y;do{x=rand(cols);y=rand(rows);}while(snake.some(s=>s.x===x&&s.y===y));return{x,y};}
+function placeApple(){apple=freeCell();}
 function reset(){
-  fitCanvas();
-  snake=[{x:Math.floor(cols/2), y:Math.floor(rows/2)}];
-  dir={x:1,y:0}; nextDir={x:1,y:0};
-  score=0; lives=3; growth=0;
-  ui.score.textContent=score; ui.lives.textContent="❤❤❤"; blip(0);
-  resetStats(); placeAllApples();
-  paused=false; ui.start.textContent="Restart"; ui.startOverlay.style.display="none";
-  cancelAnimationFrame(loopId); draw(); loopId=requestAnimationFrame(tick);
+  fit();snake=[{x:Math.floor(cols/2),y:Math.floor(rows/2)}];
+  dir={x:1,y:0};nextDir={x:1,y:0};scoreVal=0;livesVal=3;growth=0;
+  ui.score.textContent=scoreVal;ui.lives.textContent="❤❤❤";
+  placeApple();paused=false;cancelAnimationFrame(loopId);draw();loopId=requestAnimationFrame(tick);
 }
 
-/* ====== Tegn ====== */
+/* --- Drawing --- */
 function draw(){
-  ctx.fillStyle="#0a1020"; ctx.fillRect(0,0,cv.width,cv.height);
-  ctx.strokeStyle="rgba(34,48,89,.6)"; ctx.lineWidth=1;
-  for(let i=0;i<=cols;i++){ ctx.beginPath(); ctx.moveTo(i*grid,0); ctx.lineTo(i*grid,cv.height); ctx.stroke(); }
-  for(let j=0;j<=rows;j++){ ctx.beginPath(); ctx.moveTo(0,j*grid); ctx.lineTo(cv.width,j*grid); ctx.stroke(); }
-
-  ctx.font="bold 18px system-ui"; ctx.textAlign="center"; ctx.textBaseline="middle";
-  apples.forEach(a=>{ if(!a.done) ctx.fillText("🍎", a.x*grid+grid/2, a.y*grid+grid/2); });
-
+  ctx.fillStyle="#0a1020";ctx.fillRect(0,0,cv.width,cv.height);
+  ctx.strokeStyle="rgba(34,48,89,.6)";
+  for(let i=0;i<=cols;i++){ctx.beginPath();ctx.moveTo(i*grid,0);ctx.lineTo(i*grid,cv.height);ctx.stroke();}
+  for(let j=0;j<=rows;j++){ctx.beginPath();ctx.moveTo(0,j*grid);ctx.lineTo(cv.width,j*grid);ctx.stroke();}
+  if(apple){ctx.font="bold 14px system-ui";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText("🍎",apple.x*grid+grid/2,apple.y*grid+grid/2);}
   ctx.fillStyle="#79c8ff";
   snake.forEach((s,i)=>{
-    const x=s.x*grid, y=s.y*grid;
+    const x=s.x*grid,y=s.y*grid;
     ctx.fillRect(x+2,y+2,grid-4,grid-4);
-    if(i===0){ ctx.fillStyle="#0b1020"; ctx.fillRect(x+6,y+8,3,3); ctx.fillRect(x+grid-9,y+8,3,3); ctx.fillStyle="#79c8ff"; }
+    if(i===0){ctx.fillStyle="#0b1020";ctx.fillRect(x+6,y+8,3,3);ctx.fillRect(x+grid-9,y+8,3,3);ctx.fillStyle="#79c8ff";}
   });
 }
 
-/* ====== Magnetisk treff ====== */
-function isAppleCaught(head){
-  const a = apples.find(ap => !ap.done && ap.x===head.x && ap.y===head.y);
-  if(a) return a;
-  if(!ui.assist.checked) return null;
-  return apples.find(ap => !ap.done && Math.max(Math.abs(ap.x-head.x), Math.abs(ap.y-head.y))===1) || null;
-}
-
-/* ====== Loop ====== */
+/* --- Loop --- */
 function tick(ts){
-  fitCanvas();
-  if(paused){ draw(); loopId=requestAnimationFrame(tick); return; }
-  if(ts-lastTick<speedMs){ loopId=requestAnimationFrame(tick); return; }
-  lastTick=ts;
-
-  if(nextDir.x!==-dir.x || nextDir.y!==-dir.y) dir=nextDir;
-
-  const head={...snake[0]}; head.x+=dir.x; head.y+=dir.y;
-  if(head.x<0) head.x=cols-1; else if(head.x>=cols) head.x=0;
-  if(head.y<0) head.y=rows-1; else if(head.y>=rows) head.y=0;
-
-  if(snake.some(p=>p.x===head.x && p.y===head.y)){
-    loseLife("Traff halen"); draw(); loopId=requestAnimationFrame(tick); return;
-  }
-
+  fit();if(paused){draw();loopId=requestAnimationFrame(tick);return;}
+  if(ts-lastTick<speedMs){loopId=requestAnimationFrame(tick);return;}lastTick=ts;
+  if(nextDir.x!==-dir.x||nextDir.y!==-dir.y)dir=nextDir;
+  const head={...snake[0]};head.x+=dir.x;head.y+=dir.y;
+  // gjennom vegger
+  if(head.x<0)head.x=cols-1;else if(head.x>=cols)head.x=0;
+  if(head.y<0)head.y=rows-1;else if(head.y>=rows)head.y=0;
+  if(snake.some(p=>p.x===head.x&&p.y===head.y)){loseLife("Halen");return loopId=requestAnimationFrame(tick);}
   snake.unshift(head);
-
-  const hit = isAppleCaught(head);
-  if(hit){ paused=true; askQuestionFor(hit.index); }
-  else { if(growth>0) growth--; else snake.pop(); }
-
-  draw(); loopId=requestAnimationFrame(tick);
+  if(apple&&head.x===apple.x&&head.y===apple.y){paused=true;ask();}
+  else{if(growth>0)growth--;else snake.pop();}
+  draw();loopId=requestAnimationFrame(tick);
 }
 
-/* ====== Spørsmål / fasit / scoring ====== */
-btnToggleQFasit.addEventListener('click', (e)=>{
-  const show = qFasitDiv.style.display !== 'block';
-  qFasitDiv.style.display = show ? 'block' : 'none';
-  e.target.textContent = show ? 'Skjul fasit ▲' : 'Vis fasit ▼';
-  if(show) usedFasitThisRound = true;
-});
-function askQuestionFor(index){
-  currentIndex = index; usedFasitThisRound=false;
-  norw.textContent = PAIRS[index].no; ans.value="";
-  qFasitDiv.style.display="none"; btnToggleQFasit.textContent="Vis fasit ▼";
-  showQuestion(); setTimeout(()=>ans.focus({preventScroll:true}), 50);
+/* --- Spørsmål --- */
+function pick(){return PAIRS[rand(PAIRS.length)];}
+function renderGhost(target, typedLen){
+  const before=target.slice(0,typedLen), after=target.slice(typedLen);
+  ghost.innerHTML = `<span class="done">${before.replace(/ /g,"·")}</span><span class="todo">${after.replace(/ /g,"·")}</span>`;
 }
-function handleAnswer(ok){
-  hideModal();
-  const a = apples.find(x=>x.index===currentIndex); if(a) a.done=true;
-  ui.remain.textContent = apples.filter(x=>!x.done).length;
+function setupErrorlessTyping(target){
+  // Feilfri: bare riktig neste tegn godtas. Backspace/Enter tillates.
+  ans.value="";
+  renderGhost(target,0);
+  ans.onkeydown = (e)=>{
+    const key=e.key;
+    if(key==="Backspace"){ // tillat
+      const v=ans.value; setTimeout(()=>renderGhost(target, Math.max(0,v.length-1)),0); return;
+    }
+    if(key==="Enter"){ // sjekk hvis ferdig
+      if(norm(ans.value)===norm(target)){ check(); }
+      e.preventDefault(); return;
+    }
+    if(key.length===1){ // bokstav/tegn
+      const next = target[ans.value.length] || "";
+      const ok = key.toLowerCase()===next.toLowerCase();
+      if(!ok){ e.preventDefault(); return; }
+      setTimeout(()=>renderGhost(target, ans.value.length+1),0);
+      return;
+    }
+    // piltaster etc: blokkér
+    e.preventDefault();
+  };
+}
+function teardownTyping(){
+  ans.onkeydown=null; ghost.innerHTML="";
+}
+function ask(){
+  current=pick(); usedHint=false;
+  norw.textContent=current.no;
+  hint.style.display="none"; hint.textContent="";
+  showHint.style.display = beginner ? "none" : "inline-block";
+  skipBtn.textContent = beginner ? "Hopp over" : "Hopp over (–1 liv)";
+  ans.value=""; modal.style.display="flex"; ans.focus();
 
-  if(usedFasitThisRound) withFasitAttempts++; else withoutFasitAttempts++;
-  if(ok){
-    correctCount++;
-    const add = usedFasitThisRound ? POINT_FASIT : POINT_NOFASIT; // 5 / 10
-    score += add;
-    ui.score.textContent = score;
-    blip(add); // liten +5/+10 blipp
-    growth += 2; speedMs=Math.max(1000/16, speedMs*0.985);
-    toast(usedFasitThisRound ? `✅ Riktig! +${add} (fasit brukt)` : `✅ Riktig! +${add}`, true);
+  if(beginner){
+    // vis fasit + feilfri skriving (ren avskrift)
+    hint.style.display="block"; hint.textContent=`Fasit: ${current.en}`;
+    setupErrorlessTyping(current.en);
   }else{
-    wrongCount++; loseLife("❌ Feil svar");
+    teardownTyping();
   }
-  if(apples.every(x=>x.done)){ showSummary(); return; }
-  paused=false;
 }
-function checkAnswer(){ if(currentIndex==null) return; handleAnswer( norm(ans.value)===norm(PAIRS[currentIndex].en) ); }
-$('check').addEventListener('click', checkAnswer);
-ans.addEventListener('keydown', e=>{ if(e.key==="Enter") checkAnswer(); });
-$('skip').addEventListener('click', ()=>{ handleAnswer(false); });
-
-/* ====== Modal helpers ====== */
-function showQuestion(){ questionView.style.display="block"; summaryView.style.display="none"; modal.style.display="flex"; }
-function showSummary(){
-  summaryText.innerHTML = `
-    Riktige svar: <b>${correctCount}</b><br>
-    Feil svar: <b>${wrongCount}</b><br>
-    Besvart med fasit: <b>${withFasitAttempts}</b><br>
-    Besvart uten fasit: <b>${withoutFasitAttempts}</b><br>
-    <hr style="border:none;border-top:1px solid #2a3a68;margin:8px 0">
-    Sluttscore: <b>${score}</b>
-  `;
-  questionView.style.display="none"; summaryView.style.display="block"; modal.style.display="flex";
+function handle(ok){
+  modal.style.display="none";
+  const basePts = beginner ? 5 : (usedHint ? 5 : 10);
+  if(ok){
+    scoreVal+=basePts; ui.score.textContent=scoreVal;
+    growth+=2; speedMs=Math.max(1000/16, speedMs*0.985);
+    flash((beginner?"Riktig (nybegynner) +":"Riktig +")+basePts, true);
+  }else{
+    if(!beginner) loseLife("Feil svar"); // i nybegynner trekkes aldri liv
+  }
+  placeApple(); paused=false; teardownTyping();
 }
+function check(){ if(!current) return; handle(norm(ans.value)===norm(current.en)); }
 
-/* ====== Liv / slutt ====== */
-function hideModal(){ modal.style.display="none"; }
-function loseLife(reason){
-  lives--; ui.lives.textContent="❤".repeat(Math.max(lives,0));
-  toast(`${reason} –1 liv`, false);
-  if(lives<=0){ return gameOver(); }
-  snake=[{x:Math.floor(cols/2), y:Math.floor(rows/2)}]; dir={x:1,y:0}; nextDir={x:1,y:0}; growth=0;
+checkBtn.onclick=check;
+ans.addEventListener("keydown",e=>{ if(!beginner && e.key==="Enter") check(); });
+showHint.onclick=()=>{ hint.style.display="block"; hint.textContent=`Fasit: ${current.en}`; usedHint=true; };
+skipBtn.onclick=()=>{ if(!beginner) loseLife("Hoppet over"); modal.style.display="none"; placeApple(); paused=false; teardownTyping(); };
+
+/* --- Liv / slutt --- */
+function loseLife(r){
+  livesVal--; ui.lives.textContent="❤".repeat(Math.max(livesVal,0)); flash(`${r}! -1 liv`, false, 1000);
+  if(livesVal<=0) return gameOver();
+  snake=[{x:Math.floor(cols/2),y:Math.floor(rows/2)}]; dir={x:1,y:0}; nextDir={x:1,y:0}; growth=0;
 }
 function gameOver(){
   paused=true;
   const best=Number(localStorage.getItem(LS_KEY)||0);
-  if(score>best){ localStorage.setItem(LS_KEY,String(score)); ui.best.textContent=score; }
-  toast(`🕹️ Game over – Poeng: ${score}`, false, 1400);
-  ui.startOverlay.style.display="flex"; ui.start.textContent="Start / Restart";
+  if(scoreVal>best){ localStorage.setItem(LS_KEY,String(scoreVal)); ui.best.textContent=scoreVal; }
+  flash(`Game over – Poeng: ${scoreVal}`, false, 1600);
 }
 
-/* ====== Kontroller ====== */
-function bindPress(el, handler){
-  if(!el) return;
-  const h = (ev)=>{ ev.preventDefault(); ev.stopPropagation(); handler(); };
-  el.addEventListener('pointerdown', h, {passive:false});
-  el.addEventListener('click', h, {passive:false});
-}
-function setDir(dx,dy){ if(dx===-dir.x && dy===-dir.y) return; nextDir={x:dx,y:dy}; }
+/* --- Kontroller --- */
+function setDir(dx,dy){ if(dx===-dir.x&&dy===-dir.y) return; nextDir={x:dx,y:dy}; }
 window.addEventListener('keydown',e=>{
   const k=e.key.toLowerCase();
-  if(["arrowup","w"].includes(k)) setDir(0,-1);
-  else if(["arrowdown","s"].includes(k)) setDir(0,1);
-  else if(["arrowleft","a"].includes(k)) setDir(-1,0);
-  else if(["arrowright","d"].includes(k)) setDir(1,0);
+  if(["arrowup","w"].includes(k))setDir(0,-1);
+  else if(["arrowdown","s"].includes(k))setDir(0,1);
+  else if(["arrowleft","a"].includes(k))setDir(-1,0);
+  else if(["arrowright","d"].includes(k))setDir(1,0);
 });
-bindPress(ui.up,   ()=>setDir(0,-1));
-bindPress(ui.down, ()=>setDir(0, 1));
-bindPress(ui.left, ()=>setDir(-1,0));
-bindPress(ui.right,()=>setDir(1, 0));
+document.getElementById('up').onclick=()=>setDir(0,-1);
+document.getElementById('down').onclick=()=>setDir(0,1);
+document.getElementById('left').onclick=()=>setDir(-1,0);
+document.getElementById('right').onclick=()=>setDir(1,0);
 
-/* ====== UI ====== */
-ui.assist.checked = window.innerWidth <= 600;
-function startGame(){ speedMs=1000/Number(ui.speed.value); if(ui.speedShow) ui.speedShow.textContent=ui.speed.value; reset(); }
-bindPress(ui.start, startGame);
-bindPress(ui.bigStart, startGame);
-bindPress(ui.pause, ()=>{ paused=!paused; ui.pause.textContent=paused?"Fortsett":"Pause"; });
-ui.speed.addEventListener('input', ()=>{ if(ui.speedShow) ui.speedShow.textContent=ui.speed.value; speedMs=1000/Number(ui.speed.value); });
-bindPress(restartAll, ()=>{ hideModal(); startGame(); });
+/* --- UI --- */
+ui.start.onclick=()=>{ speedMs=1000/Number(ui.speed.value); ui.speedShow.textContent=ui.speed.value; reset(); };
+ui.pause.onclick=()=>{ paused=!paused; ui.pause.textContent=paused?"Fortsett":"Pause"; };
+ui.speed.addEventListener('input',()=>{ ui.speedShow.textContent=ui.speed.value; speedMs=1000/Number(ui.speed.value); });
+ui.beginner.onclick=()=>{
+  beginner=!beginner;
+  ui.beginner.textContent = `Nybegynner (feilfri): ${beginner?"PÅ":"AV"}`;
+  ui.beginner.classList.toggle('on', beginner);
+};
 
-/* ====== Boot ====== */
-fitCanvas(); draw();
+/* --- Boot --- */
+fit();draw();
 </script>
 </body>
 </html>
