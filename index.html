@@ -9,26 +9,16 @@
          --good:#42d392; --bad:#ff6b6b; --head:56px; }
   *{box-sizing:border-box}
   html,body{height:100vh;margin:0;background:#0c1020;color:var(--ink);font:16px system-ui,Segoe UI,Roboto,Arial}
-  @media (min-width:900px){ html,body{overflow:hidden} }
-
   header{padding:8px 12px;background:rgba(21,26,43,.95);border-bottom:1px solid var(--line);position:sticky;top:0;text-align:center}
   h1{margin:0;font-size:18px}
   .muted{color:var(--muted);font-size:14px}
 
-  /* Toppseksjon: spill + sidepad (piltaster) tett sammen */
-  .top{
-    height:calc(100vh - var(--head));
-    display:grid;
-    grid-template-columns: 1fr min(24vw,120px); /* smal sidekol for piltaster */
-    gap:8px;
+  /* Øvre seksjon: brett + tommel-pad under */
+  .wrap{
     padding:8px;
-    align-items:center;
-  }
-  @media (min-width:900px){
-    .top{grid-template-columns: minmax(540px, 70vw) 180px; gap:12px}
-  }
-  @media (max-width:560px){
-    .top{grid-template-columns: 1fr 96px}
+    display:flex;
+    flex-direction:column;
+    gap:8px;
   }
 
   /* Canvas-område */
@@ -39,49 +29,42 @@
     display:flex; align-items:center; justify-content:center; min-height:0;
   }
   #game{
-    width:100%; height:100%; aspect-ratio:3/2; background:#0a1020;
+    width:100%; height:auto; aspect-ratio:3/2; background:#0a1020;
     border:1px solid #1b274b; border-radius:10px; touch-action:none; display:block;
   }
-  /* Start-overlay: blokkerer ikke annet, men knappen klikker */
+  /* Start-overlay: ikke blokkér annet, men knappen klikker */
   #startOverlay{
     position:absolute; inset:6px; display:flex; align-items:center; justify-content:center;
     background:rgba(0,0,0,.35); border-radius:10px; z-index:5; pointer-events:none;
   }
   #bigStart{
-    pointer-events:auto; font-size:clamp(18px,4.5vw,26px); padding:14px 20px; border-radius:12px;
+    pointer-events:auto; font-size:clamp(18px,5vw,26px); padding:14px 20px; border-radius:12px;
     background:#1b3b2e; color:#fff; border:1px solid #225a42; font-weight:800;
   }
 
-  /* Sidepad: piltaster tett inntil brettet */
-  #sidepad{
-    display:grid; align-content:center; justify-items:center; gap:8px;
-    user-select:none;
+  /* Tommel-pad rett under brettet */
+  #thumbpad{
+    display:grid; place-items:center; gap:8px; user-select:none;
   }
-  #sidepad .row{display:flex; gap:8px}
-  #sidepad button{
-    width:min(16vw,72px); height:min(16vw,72px);
+  #thumbpad .row{display:flex; gap:10px; justify-content:center}
+  #thumbpad button{
+    width:min(20vw,78px); height:min(20vw,78px);
     max-width:84px; max-height:84px;
-    font-size:clamp(20px,6vw,30px); border-radius:12px;
+    font-size:clamp(20px,6.5vw,30px); border-radius:12px;
     background:#1b274b; color:#fff; border:1px solid var(--line); font-weight:800;
   }
-  @media (max-width:560px){
-    #sidepad button{ width:56px; height:56px; font-size:24px; border-radius:10px }
+  @media (max-width:420px){
+    #thumbpad button{ width:62px; height:62px; font-size:24px; border-radius:10px }
   }
 
-  /* Underseksjon: alt annet (poeng, liv, fart, topp, magnet, start/pause) */
-  .under{
-    padding:6px 8px 12px;
-  }
-  #meta{
-    display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px
-  }
-  .chip{display:inline-flex; gap:6px; align-items:center; background:#1a2240;
-        border:1px solid var(--line); border-radius:999px; padding:4px 10px; font-size:14px}
-  .row{display:flex; gap:8px; flex-wrap:wrap}
-  button{appearance:none; background:#1b274b; color:var(--ink); border:1px solid var(--line);
-         padding:8px 12px; border-radius:10px; font-weight:700; font-size:15px}
-  button:active{transform:translateY(1px)} .btn-prim{background:#1b3b2e; border-color:#225a42}
-  label.pill{display:inline-flex; align-items:center; gap:6px; background:#1a2240; border:1px solid var(--line); border-radius:999px; padding:5px 10px; font-size:14px}
+  /* Info- og kontrollseksjon under */
+  .under{padding:4px 8px 12px}
+  #meta{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+  .chip{display:inline-flex;gap:6px;align-items:center;background:#1a2240;border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-size:14px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  button{appearance:none;background:#1b274b;color:var(--ink);border:1px solid var(--line);padding:8px 12px;border-radius:10px;font-weight:700;font-size:15px}
+  button:active{transform:translateY(1px)} .btn-prim{background:#1b3b2e;border-color:#225a42}
+  label.pill{display:inline-flex;align-items:center;gap:6px;background:#1a2240;border:1px solid var(--line);border-radius:999px;padding:5px 10px;font-size:14px}
 
   /* Modal */
   #modal{position:fixed; inset:0; background:rgba(0,0,0,.55); display:none; align-items:center; justify-content:center; z-index:50; padding:10px}
@@ -112,15 +95,15 @@
   <div class="muted">Hei 6. trinn på Kampen skole! Kos dere med glosespill – lær, spill og ha det gøy 🍎🐍</div>
 </header>
 
-<section class="top">
+<section class="wrap">
   <!-- Spillbrett -->
   <div id="canvasWrap">
     <canvas id="game" width="900" height="600" aria-label="Snake-spill"></canvas>
     <div id="startOverlay"><button id="bigStart" type="button">Start spillet</button></div>
   </div>
 
-  <!-- Piltaster tett inntil -->
-  <div id="sidepad" aria-label="Piltaster">
+  <!-- Tommel-pad rett under brettet -->
+  <div id="thumbpad" aria-label="Piltaster">
     <div class="row"><button id="up"   type="button">⬆️</button></div>
     <div class="row">
       <button id="left"  type="button">⬅️</button>
@@ -139,7 +122,7 @@
     <span class="chip">Topp: <b id="best">0</b></span>
     <span class="chip">Oppgaver igjen: <b id="remain">10</b></span>
   </div>
-  <div class="row" style="align-items:center">
+  <div class="row">
     <button id="start" type="button" class="btn-prim">Start / Restart</button>
     <button id="pause" type="button">Pause</button>
     <label style="display:flex;align-items:center;gap:6px">Fart
@@ -190,12 +173,6 @@ const PAIRS = [
   {en:"Knickers", no:"underbukser"}
 ];
 
-function setHeaderVar(){
-  const h = document.querySelector('header').offsetHeight || 56;
-  document.documentElement.style.setProperty('--head', h + 'px');
-}
-window.addEventListener('resize', setHeaderVar); setHeaderVar();
-
 /* ====== DOM helpers ====== */
 const $ = id => document.getElementById(id);
 const cv = $('game'), ctx = cv.getContext('2d');
@@ -205,14 +182,14 @@ const ui = {
   start:$('start'), pause:$('pause'),
   up:$('up'), down:$('down'), left:$('left'), right:$('right'),
   remain:$('remain'), bigStart:$('bigStart'),
-  startOverlay: $('startOverlay'), assist:$('assist')
+  startOverlay:$('startOverlay'), assist:$('assist')
 };
 const modal=$('modal'), questionView=$('questionView'), summaryView=$('summaryView'),
       summaryText=$('summaryText'), restartAll=$('restartAll'),
       norw=$('norw'), ans=$('ans'), btnCheck=$('check'), btnSkip=$('skip'),
       btnToggleQFasit=$('toggleQFasit'), qFasitDiv=$('qFasit');
 
-const LS_KEY="snake45_best_mobile_compact_sidepad";
+const LS_KEY="snake45_best_mobile_thumbpad";
 ui.best.textContent = localStorage.getItem(LS_KEY) || 0;
 
 /* ====== Fasit-tabell ====== */
@@ -222,19 +199,19 @@ qFasitDiv.innerHTML = `<table>
 </table>`;
 
 /* ====== Canvas sizing + grid ====== */
-/* Litt større ruter på smal mob for færre ruter → enklere å treffe */
+/* Mindre rutenett på PC, større (færre ruter) på små mobiler → enklere å treffe */
 let gridBase = (window.innerWidth <= 480) ? 30 : 26;
 let grid = gridBase, cols = Math.floor(cv.width / grid), rows = Math.floor(cv.height / grid);
 
 function fitCanvas(){
   const wrap = document.getElementById('canvasWrap');
-  const bw = wrap.clientWidth - 12, bh = wrap.clientHeight - 12;
-  if (bw <= 0 || bh <= 0) return;
-  let targetW = bw, targetH = Math.round(bw * 2/3);
-  if (targetH > bh){ targetH = bh; targetW = Math.round(bh * 3/2); }
-  cv.style.width = targetW + 'px'; cv.style.height = targetH + 'px';
+  const bw = wrap.clientWidth - 12;
+  const vw = Math.min(bw, 1200); // ikke altfor bredt på store skjermer
+  const vh = Math.round(vw * 2/3);
+  cv.style.width = vw + 'px';
+  cv.style.height = vh + 'px';
   const ratio = window.devicePixelRatio || 1;
-  const w = Math.floor(targetW * ratio), h = Math.floor(targetH * ratio);
+  const w = Math.floor(vw * ratio), h = Math.floor(vh * ratio);
   if (cv.width !== w || cv.height !== h){
     cv.width = w; cv.height = h; cols = Math.floor(w / grid); rows = Math.floor(h / grid);
   }
@@ -351,7 +328,6 @@ function tick(ts){
 }
 
 /* ====== Spørsmål / fasit / scoring ====== */
-qFasitDiv.innerHTML = `<table><tr><th>Engelsk</th><th>Norsk</th></tr>${PAIRS.map(p=>`<tr><td>${p.en}</td><td>${p.no}</td></tr>`).join('')}</table>`;
 btnToggleQFasit.addEventListener('click', (e)=>{
   const show = qFasitDiv.style.display !== 'block';
   qFasitDiv.style.display = show ? 'block' : 'none';
