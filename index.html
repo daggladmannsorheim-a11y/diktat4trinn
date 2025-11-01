@@ -17,14 +17,12 @@
   h1{margin:0;font-size:18px}
   .muted{color:var(--muted);font-size:14px}
 
-  /* Hovedlayout: PC = to kolonner, mobil = én kolonne */
   .screen{
     height: calc(100vh - var(--head));
     display:grid; grid-template-columns: 1fr 320px; gap:10px; padding:8px;
   }
   @media (max-width:900px){ .screen{grid-template-columns:1fr; height:auto; min-height:calc(100vh - var(--head)); padding:6px} }
 
-  /* Canvas-område */
   #canvasBox{
     background: radial-gradient(1000px 480px at 30% -8%, #18234a, #0c1020 60%);
     border:1px solid var(--line); border-radius:12px; padding:8px; display:flex; align-items:center; justify-content:center; position:relative;
@@ -33,7 +31,6 @@
     width:100%; height:100%; aspect-ratio:3/2; background:#0a1020; border:1px solid #1b274b; border-radius:10px; touch-action:none; display:block;
   }
 
-  /* Start-overlegg: stor, tydelig knapp midt på brettet */
   #startOverlay{
     position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
     background:rgba(0,0,0,.35); border-radius:10px; z-index:5;
@@ -42,22 +39,20 @@
     font-size:clamp(18px,4.5vw,26px); padding:14px 20px; border-radius:12px; background:#1b3b2e; color:#fff; border:1px solid #225a42; font-weight:800;
   }
 
-  /* Sidepanel / Info */
   #side{display:flex; flex-direction:column; gap:8px; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:10px}
   .chips{display:flex; flex-wrap:wrap; gap:6px}
   .chip{display:inline-flex; gap:6px; align-items:center; background:#1a2240; border:1px solid var(--line); border-radius:999px; padding:4px 10px; font-size:14px}
   .row{display:flex; gap:8px; flex-wrap:wrap}
   button{appearance:none; background:#1b274b; color:var(--ink); border:1px solid var(--line); padding:8px 12px; border-radius:10px; font-weight:700; font-size:15px}
   button:active{transform:translateY(1px)} .btn-prim{background:#1b3b2e; border-color:#225a42}
+  label.pill{display:inline-flex; align-items:center; gap:6px; background:#1a2240; border:1px solid var(--line); border-radius:999px; padding:5px 10px; font-size:14px}
 
-  /* Mobil-kontrollrad (alltid synlig under canvas på små skjermer) */
   #mobileCtrlBar{display:none}
   @media (max-width:900px){
     #mobileCtrlBar{display:flex; gap:8px; justify-content:center; margin-top:6px}
     #mobileCtrlBar button{flex:0 0 auto}
   }
 
-  /* D-pad for mobil (valgfri) */
   #mobControls{display:none}
   @media (max-width:600px){
     #mobControls{display:grid; place-items:center; gap:6px}
@@ -65,7 +60,6 @@
     #mobControls button{width:56px; height:56px; font-size:26px; border-radius:12px}
   }
 
-  /* Modal (spørsmål og oppsummering) */
   #modal{position:fixed; inset:0; background:rgba(0,0,0,.55); display:none; align-items:center; justify-content:center; z-index:50; padding:10px}
   #card{width:min(94vw,620px); background:#0f1734; border:1px solid #2a3a68; border-radius:14px; padding:14px; box-shadow:0 10px 30px rgba(0,0,0,.35)}
   .qTitle{margin:0 0 8px; font-size:clamp(18px,3.8vw,22px); font-weight:800}
@@ -79,7 +73,6 @@
   th,td{border:1px solid #2a3a68; padding:6px 8px; text-align:left}
   th{background:#1a2240}
 
-  /* Smale mobiler: tettere UI */
   @media (max-width:420px){
     header h1{font-size:16px}
     .chip{font-size:12px; padding:3px 8px}
@@ -95,34 +88,29 @@
 </header>
 
 <section class="screen">
-  <!-- Spill -->
   <div id="canvasBox">
     <canvas id="game" width="900" height="600" aria-label="Snake-spill"></canvas>
-
-    <!-- Stor, tydelig start-knapp over brettet -->
-    <div id="startOverlay">
-      <button id="bigStart">Start spillet</button>
-    </div>
+    <div id="startOverlay"><button id="bigStart">Start spillet</button></div>
   </div>
 
-  <!-- Høyre-/underpanel -->
   <aside id="side">
     <div class="chips">
       <span class="chip">Poeng: <b id="score">0</b></span>
       <span class="chip">Liv: <b id="lives">❤❤❤</b></span>
-      <span class="chip">Fart: <b id="speedShow">7</b></span>
+      <span class="chip">Fart: <b id="speedShow">6</b></span>
       <span class="chip">Topp: <b id="best">0</b></span>
       <span class="chip">Oppgaver igjen: <b id="remain">10</b></span>
     </div>
 
-    <!-- Mobil: tydelig kontrolllinje under spillet -->
-    <div id="mobileCtrlBar">
+    <div class="row" style="align-items:center">
       <button id="start" class="btn-prim">Start / Restart</button>
       <button id="pause">Pause</button>
-      <label style="display:flex;align-items:center;gap:6px">Fart <input id="speed" type="range" min="4" max="16" value="7" /></label>
+      <label style="display:flex;align-items:center;gap:6px">Fart <input id="speed" type="range" min="4" max="16" value="6" /></label>
+      <label class="pill"><input type="checkbox" id="assist"> Lett å treffe (magnet)</label>
     </div>
 
-    <!-- D-pad (vises på veldig små skjermer) -->
+    <div id="mobileCtrlBar"></div>
+
     <div id="mobControls">
       <div class="row"><button id="up">⬆️</button></div>
       <div class="row">
@@ -134,7 +122,6 @@
   </aside>
 </section>
 
-<!-- Modal: spørsmål + fasit + oppsummering -->
 <div id="modal">
   <div id="card">
     <div id="questionView">
@@ -175,7 +162,6 @@ const PAIRS = [
   {en:"Knickers", no:"underbukser"}
 ];
 
-/* ====== Header-høyde for 100vh-layout ====== */
 function setHeaderVar(){
   const h = document.querySelector('header').offsetHeight || 56;
   document.documentElement.style.setProperty('--head', h + 'px');
@@ -196,7 +182,8 @@ const ui = {
   left: document.getElementById('left'), right: document.getElementById('right'),
   remain: document.getElementById('remain'),
   bigStart: document.getElementById('bigStart'),
-  startOverlay: document.getElementById('startOverlay')
+  startOverlay: document.getElementById('startOverlay'),
+  assist: document.getElementById('assist')
 };
 const modal = document.getElementById('modal');
 const questionView = document.getElementById('questionView');
@@ -211,17 +198,17 @@ const btnSkip  = document.getElementById('skip');
 const btnToggleQFasit = document.getElementById('toggleQFasit');
 const qFasitDiv = document.getElementById('qFasit');
 
-const LS_KEY = "snake45_best_mobile_tight";
+const LS_KEY = "snake45_best_mobile_tight_easy";
 ui.best.textContent = localStorage.getItem(LS_KEY) || 0;
 
-/* ====== Bygg fasit i modal (engelsk → norsk) ====== */
+/* ====== Fasit-tabell ====== */
 qFasitDiv.innerHTML = `<table>
   <tr><th>Engelsk</th><th>Norsk</th></tr>
   ${PAIRS.map(p=>`<tr><td>${p.en}</td><td>${p.no}</td></tr>`).join('')}
 </table>`;
 
-/* ====== Canvas sizing (3:2, fyller høyden) ====== */
-let gridBase = (window.innerWidth <= 420) ? 20 : 24; // litt tettere rutenett på små mobiler
+/* ====== Canvas sizing (3:2) + mindre brett på små mobiler ====== */
+let gridBase = (window.innerWidth <= 420) ? 30 : 26; // 🔸 større ruter => færre ruter (lettere å treffe)
 let grid = gridBase, cols = Math.floor(cv.width / grid), rows = Math.floor(cv.height / grid);
 function fitCanvas(){
   const box = document.getElementById('canvasBox');
@@ -241,7 +228,7 @@ function fitCanvas(){
   }
 }
 window.addEventListener('resize', ()=>{
-  gridBase = (window.innerWidth <= 420) ? 20 : 24;
+  gridBase = (window.innerWidth <= 420) ? 30 : 26;
   grid = gridBase;
   fitCanvas();
 });
@@ -264,7 +251,7 @@ function toast(msg, ok=true, t=1200){
 
 /* ====== Spilltilstand ====== */
 let snake, dir, nextDir, score, lives, paused=true, loopId=null, lastTick=0,
-    speedMs = 1000/7, growth=0;
+    speedMs = 1000/6, growth=0; // 🔸 litt saktere standardfart
 
 /* Apples: ett per glose */
 let apples = []; // {x,y,index,done:false}
@@ -316,17 +303,24 @@ function draw(){
   for(let i=0;i<=cols;i++){ ctx.beginPath(); ctx.moveTo(i*grid,0); ctx.lineTo(i*grid,cv.height); ctx.stroke(); }
   for(let j=0;j<=rows;j++){ ctx.beginPath(); ctx.moveTo(0,j*grid); ctx.lineTo(cv.width,j*grid); ctx.stroke(); }
 
-  // alle epler som ikke er besvart
   ctx.font="bold 18px system-ui"; ctx.textAlign="center"; ctx.textBaseline="middle";
   apples.forEach(a=>{ if(!a.done) ctx.fillText("🍎", a.x*grid+grid/2, a.y*grid+grid/2); });
 
-  // slange
   ctx.fillStyle="#79c8ff";
   snake.forEach((s,i)=>{
     const x=s.x*grid, y=s.y*grid;
     ctx.fillRect(x+2,y+2,grid-4,grid-4);
     if(i===0){ ctx.fillStyle="#0b1020"; ctx.fillRect(x+6,y+8,3,3); ctx.fillRect(x+grid-9,y+8,3,3); ctx.fillStyle="#79c8ff"; }
   });
+}
+
+/* ====== “Lett å treffe” (magnet) ====== */
+function isAppleCaught(head){
+  const a = apples.find(ap => !ap.done && ap.x===head.x && ap.y===head.y);
+  if(a) return a;
+  if(!ui.assist.checked) return null;
+  // naboceller (Chebyshev dist <= 1)
+  return apples.find(ap => !ap.done && Math.max(Math.abs(ap.x-head.x), Math.abs(ap.y-head.y))===1) || null;
 }
 
 /* ====== Loop ====== */
@@ -341,32 +335,32 @@ function tick(ts){
   const head={...snake[0]};
   head.x+=dir.x; head.y+=dir.y;
 
-  // gjennom vegger
   if(head.x<0) head.x=cols-1; else if(head.x>=cols) head.x=0;
   if(head.y<0) head.y=rows-1; else if(head.y>=rows) head.y=0;
 
-  // selvkollisjon
   if(snake.some(p=>p.x===head.x && p.y===head.y)){
     loseLife("Traff halen"); draw(); loopId=requestAnimationFrame(tick); return;
   }
 
   snake.unshift(head);
 
-  // tok eple?
-  const hit = apples.find(a => !a.done && a.x===head.x && a.y===head.y);
+  const hit = isAppleCaught(head);
   if(hit){ paused=true; askQuestionFor(hit.index); }
   else { if(growth>0) growth--; else snake.pop(); }
 
   draw(); loopId=requestAnimationFrame(tick);
 }
 
-/* ====== Spørsmål / fasit ====== */
+/* ====== Spørsmål / fasit / scoring ====== */
+let usedFasitThisRound=false, currentIndex=null;
+
 btnToggleQFasit.addEventListener('click', (e)=>{
   const show = qFasitDiv.style.display !== 'block';
   qFasitDiv.style.display = show ? 'block' : 'none';
   e.target.textContent = show ? 'Skjul fasit ▲' : 'Vis fasit ▼';
   if(show) usedFasitThisRound = true; // halv poeng denne runden
 });
+
 function askQuestionFor(index){
   currentIndex = index;
   usedFasitThisRound = false;
@@ -375,6 +369,7 @@ function askQuestionFor(index){
   qFasitDiv.style.display="none"; btnToggleQFasit.textContent="Vis fasit ▼";
   showQuestion(); setTimeout(()=>ans.focus({preventScroll:true}), 50);
 }
+
 function handleAnswer(ok){
   hideModal();
   const a = apples.find(x=>x.index===currentIndex); if(a) a.done = true;
@@ -391,16 +386,13 @@ function handleAnswer(ok){
     wrongCount++; loseLife("❌ Feil svar");
   }
 
-  // Ferdig?
-  if(apples.every(x=>x.done)){
-    showSummary(); return;
-  }
+  if(apples.every(x=>x.done)){ showSummary(); return; }
   paused=false;
 }
 function checkAnswer(){ if(currentIndex==null) return; handleAnswer( norm(ans.value)===norm(PAIRS[currentIndex].en) ); }
-document.getElementById('check').onclick=checkAnswer;
+btnCheck.onclick=checkAnswer;
 ans.addEventListener('keydown', e=>{ if(e.key==="Enter") checkAnswer(); });
-document.getElementById('skip').onclick=()=>{ handleAnswer(false); };
+btnSkip.onclick=()=>{ handleAnswer(false); };
 
 /* ====== Modal helpers ====== */
 function showQuestion(){ questionView.style.display="block"; summaryView.style.display="none"; modal.style.display="flex"; }
@@ -427,7 +419,6 @@ function gameOver(){
   const best=Number(localStorage.getItem(LS_KEY)||0);
   if(score>best){ localStorage.setItem(LS_KEY,String(score)); ui.best.textContent=score; }
   toast(`🕹️ Game over – Poeng: ${score}`, false, 1600);
-  // Vis start-overlay igjen for ny runde
   ui.startOverlay.style.display="flex";
   ui.start.textContent="Start / Restart";
 }
@@ -444,11 +435,18 @@ window.addEventListener('keydown',e=>{
 if(ui.up){ ui.up.onclick=()=>setDir(0,-1); ui.down.onclick=()=>setDir(0,1); ui.left.onclick=()=>setDir(-1,0); ui.right.onclick=()=>setDir(1,0); }
 
 /* ====== UI ====== */
-function startGame(){ speedMs=1000/Number(ui.speed.value); if(ui.speedShow) ui.speedShow.textContent=ui.speed.value; reset(); }
-if(ui.start) ui.start.onclick = startGame;
-if(ui.bigStart) ui.bigStart.onclick = startGame;
-if(ui.pause) ui.pause.onclick = ()=>{ paused=!paused; ui.pause.textContent=paused?"Fortsett":"Pause"; };
-if(ui.speed) ui.speed.addEventListener('input', ()=>{ if(ui.speedShow) ui.speedShow.textContent=ui.speed.value; speedMs=1000/Number(ui.speed.value); });
+// slå på “Lett å treffe” automatisk på små mobiler
+ui.assist.checked = window.innerWidth <= 600;
+
+function startGame(){
+  speedMs = 1000/Number(ui.speed.value);
+  if(ui.speedShow) ui.speedShow.textContent=ui.speed.value;
+  reset();
+}
+ui.start.onclick = startGame;
+ui.bigStart.onclick = startGame;
+ui.pause.onclick = ()=>{ paused=!paused; ui.pause.textContent=paused?"Fortsett":"Pause"; };
+ui.speed.addEventListener('input', ()=>{ if(ui.speedShow) ui.speedShow.textContent=ui.speed.value; speedMs=1000/Number(ui.speed.value); });
 restartAll.onclick = ()=>{ hideModal(); startGame(); };
 
 /* ====== Boot ====== */
