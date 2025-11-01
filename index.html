@@ -5,10 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover" />
 <title>Snake – Gloser uke 45 (Kampen 6. trinn)</title>
 <style>
-  :root{
-    --bg:#0c1020; --panel:#151a2b; --ink:#eef3fb; --muted:#9fb1d1; --line:#223059;
-    --good:#42d392; --bad:#ff6b6b; --head:56px;
-  }
+  :root{ --bg:#0c1020; --panel:#151a2b; --ink:#eef3fb; --muted:#9fb1d1; --line:#223059;
+         --good:#42d392; --bad:#ff6b6b; --head:56px; }
   *{box-sizing:border-box}
   html,body{height:100vh;margin:0;background:#0c1020;color:var(--ink);font:16px system-ui,Segoe UI,Roboto,Arial}
   @media (min-width:900px){ html,body{overflow:hidden} }
@@ -17,66 +15,64 @@
   h1{margin:0;font-size:18px}
   .muted{color:var(--muted);font-size:14px}
 
-  .screen{
-    height: calc(100vh - var(--head));
-    display:grid; grid-template-columns: 1fr 320px; gap:10px; padding:8px;
-  }
-  @media (max-width:900px){ .screen{grid-template-columns:1fr; height:auto; min-height:calc(100vh - var(--head)); padding:6px} }
+  .screen{height:calc(100vh - var(--head));display:grid;grid-template-columns:1fr 320px;gap:10px;padding:8px}
+  @media (max-width:900px){ .screen{grid-template-columns:1fr;height:auto;min-height:calc(100vh - var(--head));padding:6px} }
 
   #canvasBox{
     background: radial-gradient(1000px 480px at 30% -8%, #18234a, #0c1020 60%);
-    border:1px solid var(--line); border-radius:12px; padding:8px; display:flex; align-items:center; justify-content:center; position:relative;
+    border:1px solid var(--line); border-radius:12px; padding:8px;
+    display:flex; align-items:center; justify-content:center; position:relative;
+    min-height:0;
   }
   #game{
-    width:100%; height:100%; aspect-ratio:3/2; background:#0a1020; border:1px solid #1b274b; border-radius:10px; touch-action:none; display:block;
+    width:100%; height:100%; aspect-ratio:3/2; background:#0a1020;
+    border:1px solid #1b274b; border-radius:10px; touch-action:none; display:block;
   }
 
+  /* Start-overlay: blokkerer ikke klikkområder rundt */
   #startOverlay{
     position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
     background:rgba(0,0,0,.35); border-radius:10px; z-index:5;
+    pointer-events:none; /* 🔧 viktig: ikke stjel klikk */
   }
   #startOverlay button{
-    font-size:clamp(18px,4.5vw,26px); padding:14px 20px; border-radius:12px; background:#1b3b2e; color:#fff; border:1px solid #225a42; font-weight:800;
+    pointer-events:auto; /* 🔧 bare knappen tar klikk */
+    font-size:clamp(18px,4.5vw,26px); padding:14px 20px; border-radius:12px;
+    background:#1b3b2e; color:#fff; border:1px solid #225a42; font-weight:800;
   }
 
-  #side{display:flex; flex-direction:column; gap:8px; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:10px}
-  .chips{display:flex; flex-wrap:wrap; gap:6px}
-  .chip{display:inline-flex; gap:6px; align-items:center; background:#1a2240; border:1px solid var(--line); border-radius:999px; padding:4px 10px; font-size:14px}
-  .row{display:flex; gap:8px; flex-wrap:wrap}
-  button{appearance:none; background:#1b274b; color:var(--ink); border:1px solid var(--line); padding:8px 12px; border-radius:10px; font-weight:700; font-size:15px}
-  button:active{transform:translateY(1px)} .btn-prim{background:#1b3b2e; border-color:#225a42}
-  label.pill{display:inline-flex; align-items:center; gap:6px; background:#1a2240; border:1px solid var(--line); border-radius:999px; padding:5px 10px; font-size:14px}
-
-  #mobileCtrlBar{display:none}
-  @media (max-width:900px){
-    #mobileCtrlBar{display:flex; gap:8px; justify-content:center; margin-top:6px}
-    #mobileCtrlBar button{flex:0 0 auto}
-  }
+  #side{display:flex;flex-direction:column;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px}
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{display:inline-flex;gap:6px;align-items:center;background:#1a2240;border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-size:14px}
+  .row{display:flex;gap:8px;flex-wrap:wrap}
+  button{appearance:none;background:#1b274b;color:var(--ink);border:1px solid var(--line);padding:8px 12px;border-radius:10px;font-weight:700;font-size:15px}
+  button:active{transform:translateY(1px)} .btn-prim{background:#1b3b2e;border-color:#225a42}
+  label.pill{display:inline-flex;align-items:center;gap:6px;background:#1a2240;border:1px solid var(--line);border-radius:999px;padding:5px 10px;font-size:14px}
 
   #mobControls{display:none}
   @media (max-width:600px){
-    #mobControls{display:grid; place-items:center; gap:6px}
-    #mobControls .row{display:flex; gap:12px; justify-content:center}
-    #mobControls button{width:56px; height:56px; font-size:26px; border-radius:12px}
+    #mobControls{display:grid;place-items:center;gap:6px}
+    #mobControls .row{display:flex;gap:12px;justify-content:center}
+    #mobControls button{width:56px;height:56px;font-size:26px;border-radius:12px}
   }
 
-  #modal{position:fixed; inset:0; background:rgba(0,0,0,.55); display:none; align-items:center; justify-content:center; z-index:50; padding:10px}
-  #card{width:min(94vw,620px); background:#0f1734; border:1px solid #2a3a68; border-radius:14px; padding:14px; box-shadow:0 10px 30px rgba(0,0,0,.35)}
-  .qTitle{margin:0 0 8px; font-size:clamp(18px,3.8vw,22px); font-weight:800}
-  #ans{width:100%; padding:12px 14px; font-size:18px; border-radius:10px; border:1px solid #2a3a68; background:#101833; color:#fff}
+  #modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:50;padding:10px}
+  #card{width:min(94vw,620px);background:#0f1734;border:1px solid #2a3a68;border-radius:14px;padding:14px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+  .qTitle{margin:0 0 8px;font-size:clamp(18px,3.8vw,22px);font-weight:800}
+  #ans{width:100%;padding:12px 14px;font-size:18px;border-radius:10px;border:1px solid #2a3a68;background:#101833;color:#fff}
   .good{color:var(--good)} .bad{color:var(--bad)}
-  .qRow{display:flex; gap:8px; align-items:center; margin-top:10px}
-  .qRow .left{display:flex; gap:8px; flex-wrap:wrap}
+  .qRow{display:flex;gap:8px;align-items:center;margin-top:10px}
+  .qRow .left{display:flex;gap:8px;flex-wrap:wrap}
   .qRow .right{margin-left:auto}
-  #qFasit{display:none; margin-top:10px; max-height:40vh; overflow:auto; border:1px solid #2a3a68; border-radius:10px}
-  table{width:100%; border-collapse:collapse; font-size:15px}
-  th,td{border:1px solid #2a3a68; padding:6px 8px; text-align:left}
+  #qFasit{display:none;margin-top:10px;max-height:40vh;overflow:auto;border:1px solid #2a3a68;border-radius:10px}
+  table{width:100%;border-collapse:collapse;font-size:15px}
+  th,td{border:1px solid #2a3a68;padding:6px 8px;text-align:left}
   th{background:#1a2240}
 
   @media (max-width:420px){
     header h1{font-size:16px}
-    .chip{font-size:12px; padding:3px 8px}
-    button{font-size:14px; padding:7px 10px}
+    .chip{font-size:12px;padding:3px 8px}
+    button{font-size:14px;padding:7px 10px}
     #ans{font-size:17px}
   }
 </style>
@@ -90,7 +86,7 @@
 <section class="screen">
   <div id="canvasBox">
     <canvas id="game" width="900" height="600" aria-label="Snake-spill"></canvas>
-    <div id="startOverlay"><button id="bigStart">Start spillet</button></div>
+    <div id="startOverlay"><button id="bigStart" type="button">Start spillet</button></div>
   </div>
 
   <aside id="side">
@@ -103,25 +99,25 @@
     </div>
 
     <div class="row" style="align-items:center">
-      <button id="start" class="btn-prim">Start / Restart</button>
-      <button id="pause">Pause</button>
+      <button id="start" type="button" class="btn-prim">Start / Restart</button>
+      <button id="pause" type="button">Pause</button>
       <label style="display:flex;align-items:center;gap:6px">Fart <input id="speed" type="range" min="4" max="16" value="6" /></label>
       <label class="pill"><input type="checkbox" id="assist"> Lett å treffe (magnet)</label>
     </div>
 
-    <div id="mobileCtrlBar"></div>
-
+    <!-- D-pad (vises på små skjermer) -->
     <div id="mobControls">
-      <div class="row"><button id="up">⬆️</button></div>
+      <div class="row"><button id="up" type="button">⬆️</button></div>
       <div class="row">
-        <button id="left">⬅️</button>
-        <button id="down">⬇️</button>
-        <button id="right">➡️</button>
+        <button id="left"  type="button">⬅️</button>
+        <button id="down"  type="button">⬇️</button>
+        <button id="right" type="button">➡️</button>
       </div>
     </div>
   </aside>
 </section>
 
+<!-- Modal -->
 <div id="modal">
   <div id="card">
     <div id="questionView">
@@ -129,11 +125,11 @@
       <input id="ans" type="text" inputmode="latin" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="skriv engelsk og trykk Enter/Sjekk" />
       <div class="qRow">
         <div class="left">
-          <button id="check" class="btn-prim">Sjekk</button>
-          <button id="skip">Hopp over (–1 liv)</button>
+          <button id="check" type="button" class="btn-prim">Sjekk</button>
+          <button id="skip"  type="button">Hopp over (–1 liv)</button>
         </div>
         <div class="right">
-          <button id="toggleQFasit">Vis fasit ▼</button>
+          <button id="toggleQFasit" type="button">Vis fasit ▼</button>
         </div>
       </div>
       <div id="qFasit"></div>
@@ -142,13 +138,13 @@
     <div id="summaryView" style="display:none">
       <h3 style="margin:0 0 8px">Oppsummering</h3>
       <div id="summaryText" style="margin-bottom:10px"></div>
-      <button id="restartAll" class="btn-prim">Spill igjen</button>
+      <button id="restartAll" type="button" class="btn-prim">Spill igjen</button>
     </div>
   </div>
 </div>
 
 <script>
-/* ====== Gloser uke 45 ====== */
+/* ====== Data ====== */
 const PAIRS = [
   {en:"Decent", no:"ordentlig"},
   {en:"Grin", no:"smil"},
@@ -162,6 +158,7 @@ const PAIRS = [
   {en:"Knickers", no:"underbukser"}
 ];
 
+/* ====== Header-var ====== */
 function setHeaderVar(){
   const h = document.querySelector('header').offsetHeight || 56;
   document.documentElement.style.setProperty('--head', h + 'px');
@@ -170,45 +167,31 @@ window.addEventListener('resize', setHeaderVar); setHeaderVar();
 
 /* ====== DOM ====== */
 const cv = document.getElementById('game'), ctx = cv.getContext('2d');
+const $ = id => document.getElementById(id);
 const ui = {
-  score: document.getElementById('score'),
-  lives: document.getElementById('lives'),
-  best: document.getElementById('best'),
-  speed: document.getElementById('speed'),
-  speedShow: document.getElementById('speedShow'),
-  start: document.getElementById('start'),
-  pause: document.getElementById('pause'),
-  up: document.getElementById('up'), down: document.getElementById('down'),
-  left: document.getElementById('left'), right: document.getElementById('right'),
-  remain: document.getElementById('remain'),
-  bigStart: document.getElementById('bigStart'),
-  startOverlay: document.getElementById('startOverlay'),
-  assist: document.getElementById('assist')
+  score: $('score'), lives:$('lives'), best:$('best'),
+  speed:$('speed'), speedShow:$('speedShow'),
+  start:$('start'), pause:$('pause'),
+  up:$('up'), down:$('down'), left:$('left'), right:$('right'),
+  remain:$('remain'), bigStart:$('bigStart'), startOverlay:$('startOverlay'),
+  assist:$('assist')
 };
-const modal = document.getElementById('modal');
-const questionView = document.getElementById('questionView');
-const summaryView  = document.getElementById('summaryView');
-const summaryText  = document.getElementById('summaryText');
-const restartAll   = document.getElementById('restartAll');
+const modal = $('modal'), questionView=$('questionView'), summaryView=$('summaryView'),
+      summaryText=$('summaryText'), restartAll=$('restartAll'),
+      norw=$('norw'), ans=$('ans'), btnCheck=$('check'), btnSkip=$('skip'),
+      btnToggleQFasit=$('toggleQFasit'), qFasitDiv=$('qFasit');
 
-const norw  = document.getElementById('norw');
-const ans   = document.getElementById('ans');
-const btnCheck = document.getElementById('check');
-const btnSkip  = document.getElementById('skip');
-const btnToggleQFasit = document.getElementById('toggleQFasit');
-const qFasitDiv = document.getElementById('qFasit');
-
-const LS_KEY = "snake45_best_mobile_tight_easy";
+const LS_KEY = "snake45_best_mobile_tight_easy_fix";
 ui.best.textContent = localStorage.getItem(LS_KEY) || 0;
 
-/* ====== Fasit-tabell ====== */
+/* ====== Fasit ====== */
 qFasitDiv.innerHTML = `<table>
   <tr><th>Engelsk</th><th>Norsk</th></tr>
   ${PAIRS.map(p=>`<tr><td>${p.en}</td><td>${p.no}</td></tr>`).join('')}
 </table>`;
 
-/* ====== Canvas sizing (3:2) + mindre brett på små mobiler ====== */
-let gridBase = (window.innerWidth <= 420) ? 30 : 26; // 🔸 større ruter => færre ruter (lettere å treffe)
+/* ====== Canvas & grid ====== */
+let gridBase = (window.innerWidth <= 420) ? 30 : 26;
 let grid = gridBase, cols = Math.floor(cv.width / grid), rows = Math.floor(cv.height / grid);
 function fitCanvas(){
   const box = document.getElementById('canvasBox');
@@ -216,21 +199,17 @@ function fitCanvas(){
   if (bw <= 0 || bh <= 0) return;
   let targetW = bw, targetH = Math.round(bw * 2/3);
   if (targetH > bh){ targetH = bh; targetW = Math.round(bh * 3/2); }
-  cv.style.width = targetW + 'px';
-  cv.style.height = targetH + 'px';
+  cv.style.width = targetW + 'px'; cv.style.height = targetH + 'px';
   const ratio = window.devicePixelRatio || 1;
-  const w = Math.floor(targetW * ratio);
-  const h = Math.floor(targetH * ratio);
+  const w = Math.floor(targetW * ratio), h = Math.floor(targetH * ratio);
   if (cv.width !== w || cv.height !== h){
     cv.width = w; cv.height = h;
-    cols = Math.floor(w / grid);
-    rows = Math.floor(h / grid);
+    cols = Math.floor(w / grid); rows = Math.floor(h / grid);
   }
 }
 window.addEventListener('resize', ()=>{
   gridBase = (window.innerWidth <= 420) ? 30 : 26;
-  grid = gridBase;
-  fitCanvas();
+  grid = gridBase; fitCanvas();
 });
 
 /* ====== Utils ====== */
@@ -251,23 +230,20 @@ function toast(msg, ok=true, t=1200){
 
 /* ====== Spilltilstand ====== */
 let snake, dir, nextDir, score, lives, paused=true, loopId=null, lastTick=0,
-    speedMs = 1000/6, growth=0; // 🔸 litt saktere standardfart
-
-/* Apples: ett per glose */
+    speedMs = 1000/6, growth=0;
 let apples = []; // {x,y,index,done:false}
 
 /* Statistikk */
-let currentIndex = null;
-let usedFasitThisRound = false;
+let currentIndex = null, usedFasitThisRound = false;
 let correctCount = 0, wrongCount = 0, withFasitAttempts = 0, withoutFasitAttempts = 0;
 
-/* ====== Plassering og reset ====== */
+/* ====== Plassering ====== */
 function freeCell(){
   let x,y,tries=0;
   do{
     x=rand(cols); y=rand(rows); tries++; if(tries>2000) break;
   }while(
-    snake.some(s=>s.x===x&&s.y===y) ||
+    (snake && snake.some(s=>s.x===x&&s.y===y)) ||
     apples.some(a=>!a.done && a.x===x && a.y===y)
   );
   return {x,y};
@@ -289,8 +265,7 @@ function reset(){
   dir={x:1,y:0}; nextDir={x:1,y:0};
   score=0; lives=3; growth=0;
   ui.score.textContent=score; ui.lives.textContent="❤❤❤";
-  resetStats();
-  placeAllApples();
+  resetStats(); placeAllApples();
   paused=false; ui.start.textContent="Restart";
   ui.startOverlay.style.display="none";
   cancelAnimationFrame(loopId); draw(); loopId=requestAnimationFrame(tick);
@@ -314,12 +289,11 @@ function draw(){
   });
 }
 
-/* ====== “Lett å treffe” (magnet) ====== */
+/* ====== Magnet-treff ====== */
 function isAppleCaught(head){
   const a = apples.find(ap => !ap.done && ap.x===head.x && ap.y===head.y);
   if(a) return a;
   if(!ui.assist.checked) return null;
-  // naboceller (Chebyshev dist <= 1)
   return apples.find(ap => !ap.done && Math.max(Math.abs(ap.x-head.x), Math.abs(ap.y-head.y))===1) || null;
 }
 
@@ -352,24 +326,18 @@ function tick(ts){
 }
 
 /* ====== Spørsmål / fasit / scoring ====== */
-let usedFasitThisRound=false, currentIndex=null;
-
 btnToggleQFasit.addEventListener('click', (e)=>{
   const show = qFasitDiv.style.display !== 'block';
   qFasitDiv.style.display = show ? 'block' : 'none';
   e.target.textContent = show ? 'Skjul fasit ▲' : 'Vis fasit ▼';
-  if(show) usedFasitThisRound = true; // halv poeng denne runden
+  if(show) usedFasitThisRound = true;
 });
-
 function askQuestionFor(index){
-  currentIndex = index;
-  usedFasitThisRound = false;
+  currentIndex = index; usedFasitThisRound = false;
   norw.textContent = PAIRS[index].no;
-  ans.value = "";
-  qFasitDiv.style.display="none"; btnToggleQFasit.textContent="Vis fasit ▼";
+  ans.value = ""; qFasitDiv.style.display="none"; btnToggleQFasit.textContent="Vis fasit ▼";
   showQuestion(); setTimeout(()=>ans.focus({preventScroll:true}), 50);
 }
-
 function handleAnswer(ok){
   hideModal();
   const a = apples.find(x=>x.index===currentIndex); if(a) a.done = true;
@@ -390,9 +358,9 @@ function handleAnswer(ok){
   paused=false;
 }
 function checkAnswer(){ if(currentIndex==null) return; handleAnswer( norm(ans.value)===norm(PAIRS[currentIndex].en) ); }
-btnCheck.onclick=checkAnswer;
+btnCheck.addEventListener('click', checkAnswer);
 ans.addEventListener('keydown', e=>{ if(e.key==="Enter") checkAnswer(); });
-btnSkip.onclick=()=>{ handleAnswer(false); };
+btnSkip.addEventListener('click', ()=>{ handleAnswer(false); });
 
 /* ====== Modal helpers ====== */
 function showQuestion(){ questionView.style.display="block"; summaryView.style.display="none"; modal.style.display="flex"; }
@@ -423,7 +391,14 @@ function gameOver(){
   ui.start.textContent="Start / Restart";
 }
 
-/* ====== Kontroller ====== */
+/* ====== Kontroller (robuste bindinger) ====== */
+function bindPress(el, handler){
+  if(!el) return;
+  const h = (ev)=>{ ev.preventDefault(); ev.stopPropagation(); handler(); };
+  el.addEventListener('pointerdown', h, {passive:false});
+  el.addEventListener('click', h, {passive:false});
+}
+
 function setDir(dx,dy){ if(dx===-dir.x && dy===-dir.y) return; nextDir={x:dx,y:dy}; }
 window.addEventListener('keydown',e=>{
   const k=e.key.toLowerCase();
@@ -432,10 +407,12 @@ window.addEventListener('keydown',e=>{
   else if(["arrowleft","a"].includes(k)) setDir(-1,0);
   else if(["arrowright","d"].includes(k)) setDir(1,0);
 });
-if(ui.up){ ui.up.onclick=()=>setDir(0,-1); ui.down.onclick=()=>setDir(0,1); ui.left.onclick=()=>setDir(-1,0); ui.right.onclick=()=>setDir(1,0); }
+bindPress(ui.up,   ()=>setDir(0,-1));
+bindPress(ui.down, ()=>setDir(0, 1));
+bindPress(ui.left, ()=>setDir(-1,0));
+bindPress(ui.right,()=>setDir(1, 0));
 
 /* ====== UI ====== */
-// slå på “Lett å treffe” automatisk på små mobiler
 ui.assist.checked = window.innerWidth <= 600;
 
 function startGame(){
@@ -443,11 +420,11 @@ function startGame(){
   if(ui.speedShow) ui.speedShow.textContent=ui.speed.value;
   reset();
 }
-ui.start.onclick = startGame;
-ui.bigStart.onclick = startGame;
-ui.pause.onclick = ()=>{ paused=!paused; ui.pause.textContent=paused?"Fortsett":"Pause"; };
+bindPress(ui.start, startGame);
+bindPress(ui.bigStart, startGame);
+bindPress(ui.pause, ()=>{ paused=!paused; ui.pause.textContent=paused?"Fortsett":"Pause"; });
 ui.speed.addEventListener('input', ()=>{ if(ui.speedShow) ui.speedShow.textContent=ui.speed.value; speedMs=1000/Number(ui.speed.value); });
-restartAll.onclick = ()=>{ hideModal(); startGame(); };
+bindPress(restartAll, ()=>{ hideModal(); startGame(); });
 
 /* ====== Boot ====== */
 fitCanvas(); draw();
