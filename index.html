@@ -6,96 +6,86 @@
 <title>Snake – Gloser uke 45 (Kampen 6. trinn)</title>
 <style>
   :root{
-    --bg:#0c1020; --panel:#151a2b; --ink:#eef3fb; --muted:#9fb1d1;
-    --line:#223059; --good:#42d392; --bad:#ff6b6b;
-    --head:56px;
+    --bg:#0c1020; --panel:#151a2b; --ink:#eef3fb; --muted:#9fb1d1; --line:#223059;
+    --good:#42d392; --bad:#ff6b6b; --head:56px;
   }
   *{box-sizing:border-box}
-  html,body{height:100vh;margin:0;background:#0c1020;color:var(--ink);
-            font:16px system-ui,Segoe UI,Roboto,Arial}
+  html,body{height:100vh;margin:0;background:#0c1020;color:var(--ink);font:16px system-ui,Segoe UI,Roboto,Arial}
   @media (min-width:900px){ html,body{overflow:hidden} }
 
-  header{
-    height:auto; padding:8px 14px; background:rgba(21,26,43,.95);
-    border-bottom:1px solid var(--line); position:sticky; top:0; text-align:center
-  }
-  h1{margin:0; font-size:18px}
-  .muted{color:var(--muted)}
+  header{padding:8px 12px;background:rgba(21,26,43,.95);border-bottom:1px solid var(--line);position:sticky;top:0;text-align:center}
+  h1{margin:0;font-size:18px}
+  .muted{color:var(--muted);font-size:14px}
 
+  /* Hovedlayout: PC = to kolonner, mobil = én kolonne */
   .screen{
     height: calc(100vh - var(--head));
-    display:grid;
-    grid-template-columns: 1fr 320px;
-    gap:12px; padding:8px;
+    display:grid; grid-template-columns: 1fr 320px; gap:10px; padding:8px;
   }
-  @media (max-width:900px){
-    .screen{grid-template-columns:1fr; height:auto; min-height:calc(100vh - var(--head))}
-  }
+  @media (max-width:900px){ .screen{grid-template-columns:1fr; height:auto; min-height:calc(100vh - var(--head)); padding:6px} }
 
+  /* Canvas-område */
   #canvasBox{
     background: radial-gradient(1000px 480px at 30% -8%, #18234a, #0c1020 60%);
-    border:1px solid var(--line); border-radius:12px; padding:8px;
-    display:flex; align-items:center; justify-content:center; min-height:0;
+    border:1px solid var(--line); border-radius:12px; padding:8px; display:flex; align-items:center; justify-content:center; position:relative;
   }
   #game{
-    width:100%; height:100%; aspect-ratio: 3 / 2;
-    background:#0a1020; border:1px solid #1b274b; border-radius:10px;
-    touch-action:none; display:block;
+    width:100%; height:100%; aspect-ratio:3/2; background:#0a1020; border:1px solid #1b274b; border-radius:10px; touch-action:none; display:block;
   }
 
-  #side{
-    display:flex; flex-direction:column; gap:10px;
-    background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:10px;
-    min-height:0;
+  /* Start-overlegg: stor, tydelig knapp midt på brettet */
+  #startOverlay{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    background:rgba(0,0,0,.35); border-radius:10px; z-index:5;
   }
+  #startOverlay button{
+    font-size:clamp(18px,4.5vw,26px); padding:14px 20px; border-radius:12px; background:#1b3b2e; color:#fff; border:1px solid #225a42; font-weight:800;
+  }
+
+  /* Sidepanel / Info */
+  #side{display:flex; flex-direction:column; gap:8px; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:10px}
   .chips{display:flex; flex-wrap:wrap; gap:6px}
-  .chip{display:inline-flex; gap:6px; align-items:center; background:#1a2240;
-        border:1px solid var(--line); border-radius:999px; padding:4px 10px; font-size:14px}
+  .chip{display:inline-flex; gap:6px; align-items:center; background:#1a2240; border:1px solid var(--line); border-radius:999px; padding:4px 10px; font-size:14px}
   .row{display:flex; gap:8px; flex-wrap:wrap}
-  button{
-    appearance:none; background:#1b274b; color:var(--ink); border:1px solid var(--line);
-    padding:8px 12px; border-radius:10px; font-weight:700; font-size:15px
-  }
-  button:active{transform:translateY(1px)}
-  .btn-prim{background:#1b3b2e; border-color:#225a42}
+  button{appearance:none; background:#1b274b; color:var(--ink); border:1px solid var(--line); padding:8px 12px; border-radius:10px; font-weight:700; font-size:15px}
+  button:active{transform:translateY(1px)} .btn-prim{background:#1b3b2e; border-color:#225a42}
 
-  #mobControls{display:none}
+  /* Mobil-kontrollrad (alltid synlig under canvas på små skjermer) */
+  #mobileCtrlBar{display:none}
   @media (max-width:900px){
-    #mobControls{display:grid; place-items:center; gap:6px}
-    #mobControls .row{display:flex; gap:14px; justify-content:center}
-    #mobControls button{width:70px; height:70px; font-size:30px; border-radius:14px}
+    #mobileCtrlBar{display:flex; gap:8px; justify-content:center; margin-top:6px}
+    #mobileCtrlBar button{flex:0 0 auto}
   }
 
-  /* Spørsmål-modal */
-  #modal{
-    position:fixed; inset:0; background:rgba(0,0,0,.55); display:none;
-    align-items:center; justify-content:center; z-index:50; padding:10px
+  /* D-pad for mobil (valgfri) */
+  #mobControls{display:none}
+  @media (max-width:600px){
+    #mobControls{display:grid; place-items:center; gap:6px}
+    #mobControls .row{display:flex; gap:12px; justify-content:center}
+    #mobControls button{width:56px; height:56px; font-size:26px; border-radius:12px}
   }
-  #card{
-    width:min(92vw,560px); background:#0f1734; border:1px solid #2a3a68;
-    border-radius:14px; padding:14px; box-shadow:0 10px 30px rgba(0,0,0,.35)
-  }
-  #ans{
-    width:100%; padding:12px 14px; font-size:18px; border-radius:10px;
-    border:1px solid #2a3a68; background:#101833; color:#fff
-  }
+
+  /* Modal (spørsmål og oppsummering) */
+  #modal{position:fixed; inset:0; background:rgba(0,0,0,.55); display:none; align-items:center; justify-content:center; z-index:50; padding:10px}
+  #card{width:min(94vw,620px); background:#0f1734; border:1px solid #2a3a68; border-radius:14px; padding:14px; box-shadow:0 10px 30px rgba(0,0,0,.35)}
+  .qTitle{margin:0 0 8px; font-size:clamp(18px,3.8vw,22px); font-weight:800}
+  #ans{width:100%; padding:12px 14px; font-size:18px; border-radius:10px; border:1px solid #2a3a68; background:#101833; color:#fff}
   .good{color:var(--good)} .bad{color:var(--bad)}
-  #qFasit{display:none; margin-top:10px; max-height:40vh; overflow:auto;
-          border:1px solid #2a3a68; border-radius:10px}
+  .qRow{display:flex; gap:8px; align-items:center; margin-top:10px}
+  .qRow .left{display:flex; gap:8px; flex-wrap:wrap}
+  .qRow .right{margin-left:auto}
+  #qFasit{display:none; margin-top:10px; max-height:40vh; overflow:auto; border:1px solid #2a3a68; border-radius:10px}
   table{width:100%; border-collapse:collapse; font-size:15px}
   th,td{border:1px solid #2a3a68; padding:6px 8px; text-align:left}
   th{background:#1a2240}
 
-  /* Oppsummering-modal */
-  #summary{
-    position:fixed; inset:0; background:rgba(0,0,0,.65); display:none;
-    align-items:center; justify-content:center; z-index:60; padding:10px
+  /* Smale mobiler: tettere UI */
+  @media (max-width:420px){
+    header h1{font-size:16px}
+    .chip{font-size:12px; padding:3px 8px}
+    button{font-size:14px; padding:7px 10px}
+    #ans{font-size:17px}
   }
-  #sumcard{
-    width:min(92vw,560px); background:#111a36; border:1px solid #2a3a68;
-    border-radius:14px; padding:16px; box-shadow:0 10px 30px rgba(0,0,0,.4)
-  }
-  #sumlist{margin:8px 0 0; line-height:1.6}
 </style>
 </head>
 <body>
@@ -105,25 +95,34 @@
 </header>
 
 <section class="screen">
+  <!-- Spill -->
   <div id="canvasBox">
     <canvas id="game" width="900" height="600" aria-label="Snake-spill"></canvas>
+
+    <!-- Stor, tydelig start-knapp over brettet -->
+    <div id="startOverlay">
+      <button id="bigStart">Start spillet</button>
+    </div>
   </div>
 
+  <!-- Høyre-/underpanel -->
   <aside id="side">
     <div class="chips">
       <span class="chip">Poeng: <b id="score">0</b></span>
       <span class="chip">Liv: <b id="lives">❤❤❤</b></span>
       <span class="chip">Fart: <b id="speedShow">7</b></span>
       <span class="chip">Topp: <b id="best">0</b></span>
-      <span class="chip">Gjenstår: <b id="remain">10</b></span>
+      <span class="chip">Oppgaver igjen: <b id="remain">10</b></span>
     </div>
 
-    <div class="row">
+    <!-- Mobil: tydelig kontrolllinje under spillet -->
+    <div id="mobileCtrlBar">
       <button id="start" class="btn-prim">Start / Restart</button>
       <button id="pause">Pause</button>
-      <label>Fart <input id="speed" type="range" min="4" max="16" value="7" /></label>
+      <label style="display:flex;align-items:center;gap:6px">Fart <input id="speed" type="range" min="4" max="16" value="7" /></label>
     </div>
 
+    <!-- D-pad (vises på veldig små skjermer) -->
     <div id="mobControls">
       <div class="row"><button id="up">⬆️</button></div>
       <div class="row">
@@ -135,30 +134,28 @@
   </aside>
 </section>
 
-<!-- Spørsmål -->
+<!-- Modal: spørsmål + fasit + oppsummering -->
 <div id="modal">
   <div id="card">
-    <p style="margin:0 0 8px">Skriv engelsk for: <span id="norw" class="good"></span></p>
-    <input id="ans" type="text" inputmode="latin" autocomplete="off" autocapitalize="none" spellcheck="false"
-           placeholder="skriv engelsk og trykk Enter/Sjekk" />
-    <div class="row" style="justify-content:space-between; margin-top:10px">
-      <div class="row">
-        <button id="check" class="btn-prim">Sjekk</button>
-        <button id="skip">Hopp over (–1 liv)</button>
+    <div id="questionView">
+      <p class="qTitle">Skriv <span class="good">engelsk</span> for: <span id="norw" class="good"></span></p>
+      <input id="ans" type="text" inputmode="latin" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="skriv engelsk og trykk Enter/Sjekk" />
+      <div class="qRow">
+        <div class="left">
+          <button id="check" class="btn-prim">Sjekk</button>
+          <button id="skip">Hopp over (–1 liv)</button>
+        </div>
+        <div class="right">
+          <button id="toggleQFasit">Vis fasit ▼</button>
+        </div>
       </div>
-      <button id="toggleQFasit">Vis fasit ▼</button>
+      <div id="qFasit"></div>
     </div>
-    <div id="qFasit"></div>
-  </div>
-</div>
 
-<!-- Oppsummering -->
-<div id="summary">
-  <div id="sumcard">
-    <h3 style="margin:0 0 6px">Oppsummering – Uke 45</h3>
-    <div id="sumlist"></div>
-    <div class="row" style="justify-content:flex-end;margin-top:12px">
-      <button id="sumClose" class="btn-prim">Spill igjen</button>
+    <div id="summaryView" style="display:none">
+      <h3 style="margin:0 0 8px">Oppsummering</h3>
+      <div id="summaryText" style="margin-bottom:10px"></div>
+      <button id="restartAll" class="btn-prim">Spill igjen</button>
     </div>
   </div>
 </div>
@@ -178,17 +175,15 @@ const PAIRS = [
   {en:"Knickers", no:"underbukser"}
 ];
 
-/* ====== Header-høyde (for 100vh-layout) ====== */
+/* ====== Header-høyde for 100vh-layout ====== */
 function setHeaderVar(){
   const h = document.querySelector('header').offsetHeight || 56;
   document.documentElement.style.setProperty('--head', h + 'px');
 }
-window.addEventListener('resize', setHeaderVar);
-setHeaderVar();
+window.addEventListener('resize', setHeaderVar); setHeaderVar();
 
 /* ====== DOM ====== */
-const cv = document.getElementById('game');
-const ctx = cv.getContext('2d');
+const cv = document.getElementById('game'), ctx = cv.getContext('2d');
 const ui = {
   score: document.getElementById('score'),
   lives: document.getElementById('lives'),
@@ -197,13 +192,18 @@ const ui = {
   speedShow: document.getElementById('speedShow'),
   start: document.getElementById('start'),
   pause: document.getElementById('pause'),
-  up: document.getElementById('up'),
-  down: document.getElementById('down'),
-  left: document.getElementById('left'),
-  right: document.getElementById('right'),
-  remain: document.getElementById('remain')
+  up: document.getElementById('up'), down: document.getElementById('down'),
+  left: document.getElementById('left'), right: document.getElementById('right'),
+  remain: document.getElementById('remain'),
+  bigStart: document.getElementById('bigStart'),
+  startOverlay: document.getElementById('startOverlay')
 };
 const modal = document.getElementById('modal');
+const questionView = document.getElementById('questionView');
+const summaryView  = document.getElementById('summaryView');
+const summaryText  = document.getElementById('summaryText');
+const restartAll   = document.getElementById('restartAll');
+
 const norw  = document.getElementById('norw');
 const ans   = document.getElementById('ans');
 const btnCheck = document.getElementById('check');
@@ -211,21 +211,18 @@ const btnSkip  = document.getElementById('skip');
 const btnToggleQFasit = document.getElementById('toggleQFasit');
 const qFasitDiv = document.getElementById('qFasit');
 
-const summary = document.getElementById('summary');
-const sumlist = document.getElementById('sumlist');
-const sumClose = document.getElementById('sumClose');
-
-const LS_KEY = "snake45_best_summary_all";
+const LS_KEY = "snake45_best_mobile_tight";
 ui.best.textContent = localStorage.getItem(LS_KEY) || 0;
 
-/* ====== Bygg fasit-tabell i modal (engelsk → norsk) ====== */
+/* ====== Bygg fasit i modal (engelsk → norsk) ====== */
 qFasitDiv.innerHTML = `<table>
   <tr><th>Engelsk</th><th>Norsk</th></tr>
   ${PAIRS.map(p=>`<tr><td>${p.en}</td><td>${p.no}</td></tr>`).join('')}
 </table>`;
 
-/* ====== Canvas sizing (3:2) ====== */
-let grid = 24, cols = Math.floor(cv.width / grid), rows = Math.floor(cv.height / grid);
+/* ====== Canvas sizing (3:2, fyller høyden) ====== */
+let gridBase = (window.innerWidth <= 420) ? 20 : 24; // litt tettere rutenett på små mobiler
+let grid = gridBase, cols = Math.floor(cv.width / grid), rows = Math.floor(cv.height / grid);
 function fitCanvas(){
   const box = document.getElementById('canvasBox');
   const bw = box.clientWidth - 16, bh = box.clientHeight - 16;
@@ -243,7 +240,11 @@ function fitCanvas(){
     rows = Math.floor(h / grid);
   }
 }
-window.addEventListener('resize', fitCanvas);
+window.addEventListener('resize', ()=>{
+  gridBase = (window.innerWidth <= 420) ? 20 : 24;
+  grid = gridBase;
+  fitCanvas();
+});
 
 /* ====== Utils ====== */
 const rand = n => Math.floor(Math.random()*n);
@@ -265,44 +266,47 @@ function toast(msg, ok=true, t=1200){
 let snake, dir, nextDir, score, lives, paused=true, loopId=null, lastTick=0,
     speedMs = 1000/7, growth=0;
 
-/* Epler: ett per glose */
-let apples = []; // {x,y, idx} der idx peker inn i PAIRS
-/* Pågående spørsmål */
-let currentIdx = null;
-let usedFasitThisRound = false;
+/* Apples: ett per glose */
+let apples = []; // {x,y,index,done:false}
 
 /* Statistikk */
-let correct = 0, wrong = 0, correctWithFasit = 0, correctWithoutFasit = 0;
+let currentIndex = null;
+let usedFasitThisRound = false;
+let correctCount = 0, wrongCount = 0, withFasitAttempts = 0, withoutFasitAttempts = 0;
 
-/* ====== Start/Reset ====== */
-function freeCellAvoidSnakeAndApples(){
+/* ====== Plassering og reset ====== */
+function freeCell(){
   let x,y,tries=0;
   do{
-    x=rand(cols); y=rand(rows); tries++;
-    if(tries>2000) break;
+    x=rand(cols); y=rand(rows); tries++; if(tries>2000) break;
   }while(
     snake.some(s=>s.x===x&&s.y===y) ||
-    apples.some(a=>a.x===x && a.y===y)
+    apples.some(a=>!a.done && a.x===x && a.y===y)
   );
   return {x,y};
 }
-function seedAllApples(){
+function placeAllApples(){
   apples = [];
-  for(let idx=0; idx<PAIRS.length; idx++){
-    const pos = freeCellAvoidSnakeAndApples();
-    apples.push({x:pos.x, y:pos.y, idx});
+  for(let i=0;i<PAIRS.length;i++){
+    const {x,y} = freeCell();
+    apples.push({x,y,index:i,done:false});
   }
-  ui.remain.textContent = String(apples.length);
+  ui.remain.textContent = apples.filter(a=>!a.done).length;
+}
+function resetStats(){
+  correctCount=0; wrongCount=0; withFasitAttempts=0; withoutFasitAttempts=0;
 }
 function reset(){
   fitCanvas();
-  snake = [{x:Math.floor(cols/2), y:Math.floor(rows/2)}];
-  dir = {x:1,y:0}; nextDir = {x:1,y:0};
-  score = 0; lives = 3; growth = 0;
-  correct = 0; wrong = 0; correctWithFasit = 0; correctWithoutFasit = 0;
-  ui.score.textContent = score; ui.lives.textContent = "❤❤❤";
-  seedAllApples();
-  paused = false; cancelAnimationFrame(loopId); draw(); loopId = requestAnimationFrame(tick);
+  snake=[{x:Math.floor(cols/2), y:Math.floor(rows/2)}];
+  dir={x:1,y:0}; nextDir={x:1,y:0};
+  score=0; lives=3; growth=0;
+  ui.score.textContent=score; ui.lives.textContent="❤❤❤";
+  resetStats();
+  placeAllApples();
+  paused=false; ui.start.textContent="Restart";
+  ui.startOverlay.style.display="none";
+  cancelAnimationFrame(loopId); draw(); loopId=requestAnimationFrame(tick);
 }
 
 /* ====== Tegn ====== */
@@ -312,11 +316,9 @@ function draw(){
   for(let i=0;i<=cols;i++){ ctx.beginPath(); ctx.moveTo(i*grid,0); ctx.lineTo(i*grid,cv.height); ctx.stroke(); }
   for(let j=0;j<=rows;j++){ ctx.beginPath(); ctx.moveTo(0,j*grid); ctx.lineTo(cv.width,j*grid); ctx.stroke(); }
 
-  // alle epler
+  // alle epler som ikke er besvart
   ctx.font="bold 18px system-ui"; ctx.textAlign="center"; ctx.textBaseline="middle";
-  apples.forEach(a=>{
-    ctx.fillText("🍎", a.x*grid+grid/2, a.y*grid+grid/2);
-  });
+  apples.forEach(a=>{ if(!a.done) ctx.fillText("🍎", a.x*grid+grid/2, a.y*grid+grid/2); });
 
   // slange
   ctx.fillStyle="#79c8ff";
@@ -330,14 +332,15 @@ function draw(){
 /* ====== Loop ====== */
 function tick(ts){
   fitCanvas();
-  if(paused){ draw(); loopId = requestAnimationFrame(tick); return; }
-  if(ts - lastTick < speedMs){ loopId = requestAnimationFrame(tick); return; }
-  lastTick = ts;
+  if(paused){ draw(); loopId=requestAnimationFrame(tick); return; }
+  if(ts-lastTick<speedMs){ loopId=requestAnimationFrame(tick); return; }
+  lastTick=ts;
 
-  if(nextDir.x!==-dir.x || nextDir.y!==-dir.y) dir = nextDir;
+  if(nextDir.x!==-dir.x || nextDir.y!==-dir.y) dir=nextDir;
 
-  const head = {...snake[0]};
-  head.x += dir.x; head.y += dir.y;
+  const head={...snake[0]};
+  head.x+=dir.x; head.y+=dir.y;
+
   // gjennom vegger
   if(head.x<0) head.x=cols-1; else if(head.x>=cols) head.x=0;
   if(head.y<0) head.y=rows-1; else if(head.y>=rows) head.y=0;
@@ -349,125 +352,84 @@ function tick(ts){
 
   snake.unshift(head);
 
-  // eple-treff? (sjekk mot alle)
-  const hitIndex = apples.findIndex(a=>a.x===head.x && a.y===head.y);
-  if(hitIndex>-1){
-    // stopp og spør for akkurat den glosen
-    paused=true;
-    currentIdx = apples[hitIndex].idx;
-    usedFasitThisRound = false;
-    openQuestion(currentIdx, hitIndex); // send også indeksen i apples-lista
-  }else{
-    if(growth>0) growth--; else snake.pop();
-  }
+  // tok eple?
+  const hit = apples.find(a => !a.done && a.x===head.x && a.y===head.y);
+  if(hit){ paused=true; askQuestionFor(hit.index); }
+  else { if(growth>0) growth--; else snake.pop(); }
 
   draw(); loopId=requestAnimationFrame(tick);
 }
 
-/* ====== Spørsmål ====== */
-function openQuestion(idx, applesIndex){
-  norw.textContent = PAIRS[idx].no;
-  ans.value="";
-  qFasitDiv.style.display="none";
-  btnToggleQFasit.textContent="Vis fasit ▼";
-  modal.dataset.appleIndex = String(applesIndex); // lagre hvilken apple som ble truffet
-  modal.style.display="flex";
-  setTimeout(()=>ans.focus({preventScroll:true}), 50);
-}
+/* ====== Spørsmål / fasit ====== */
 btnToggleQFasit.addEventListener('click', (e)=>{
   const show = qFasitDiv.style.display !== 'block';
   qFasitDiv.style.display = show ? 'block' : 'none';
   e.target.textContent = show ? 'Skjul fasit ▲' : 'Vis fasit ▼';
-  if(show) usedFasitThisRound = true;
+  if(show) usedFasitThisRound = true; // halv poeng denne runden
 });
-
+function askQuestionFor(index){
+  currentIndex = index;
+  usedFasitThisRound = false;
+  norw.textContent = PAIRS[index].no;
+  ans.value = "";
+  qFasitDiv.style.display="none"; btnToggleQFasit.textContent="Vis fasit ▼";
+  showQuestion(); setTimeout(()=>ans.focus({preventScroll:true}), 50);
+}
 function handleAnswer(ok){
-  modal.style.display="none";
-  const ai = Number(modal.dataset.appleIndex);
-  // Fjern eplet uansett (oppgaven regnes som besvart)
-  if(ai>=0 && ai<apples.length){
-    apples.splice(ai,1);
-    ui.remain.textContent = String(apples.length);
-  }
+  hideModal();
+  const a = apples.find(x=>x.index===currentIndex); if(a) a.done = true;
+  ui.remain.textContent = apples.filter(x=>!x.done).length;
+
+  if(usedFasitThisRound) withFasitAttempts++; else withoutFasitAttempts++;
   if(ok){
+    correctCount++;
     const add = usedFasitThisRound ? 5 : 10;
-    score += add; ui.score.textContent = score;
-    growth += 2; speedMs = Math.max(1000/16, speedMs*0.985);
-    correct++;
-    if(usedFasitThisRound) correctWithFasit++; else correctWithoutFasit++;
+    score += add; ui.score.textContent=score;
+    growth += 2; speedMs=Math.max(1000/16, speedMs*0.985);
     toast(usedFasitThisRound ? `✅ Riktig! +${add} (fasit brukt)` : `✅ Riktig! +${add}`, true, 1300);
   }else{
-    wrong++; loseLife("❌ Feil svar");
+    wrongCount++; loseLife("❌ Feil svar");
   }
-  // Ferdig med alle?
-  if(apples.length===0){
-    paused = true;
-    showSummary();
-    return;
-  }
-  paused=false;
-}
-function checkAnswer(){
-  if(currentIdx==null) return;
-  handleAnswer( norm(ans.value) === norm(PAIRS[currentIdx].en) );
-}
-btnCheck.onclick = checkAnswer;
-ans.addEventListener('keydown', e=>{ if(e.key==="Enter") checkAnswer(); });
-btnSkip.onclick = ()=>{
-  modal.style.display="none";
-  wrong++; loseLife("Hoppet over");
-  // Også telle oppgaven som “besvart” og fjerne eplet
-  const ai = Number(modal.dataset.appleIndex);
-  if(ai>=0 && ai<apples.length){
-    apples.splice(ai,1);
-    ui.remain.textContent = String(apples.length);
-  }
-  if(apples.length===0){
-    paused = true; showSummary(); return;
-  }
-  paused=false;
-};
 
-/* ====== Oppsummering ====== */
-function showSummary(){
-  // Oppdater best-score også her
-  const best = Number(localStorage.getItem(LS_KEY)||0);
-  if(score>best){ localStorage.setItem(LS_KEY,String(score)); ui.best.textContent = score; }
-  sumlist.innerHTML = `
-    <div>Poeng: <b>${score}</b></div>
-    <div>Riktige: <b>${correct}</b></div>
-    <div>Feil: <b>${wrong}</b></div>
-    <div>Riktige uten fasit: <b>${correctWithoutFasit}</b></div>
-    <div>Riktige med fasit: <b>${correctWithFasit}</b></div>
-  `;
-  summary.style.display="flex";
+  // Ferdig?
+  if(apples.every(x=>x.done)){
+    showSummary(); return;
+  }
+  paused=false;
 }
-sumClose.onclick = ()=>{ summary.style.display="none"; reset(); };
+function checkAnswer(){ if(currentIndex==null) return; handleAnswer( norm(ans.value)===norm(PAIRS[currentIndex].en) ); }
+document.getElementById('check').onclick=checkAnswer;
+ans.addEventListener('keydown', e=>{ if(e.key==="Enter") checkAnswer(); });
+document.getElementById('skip').onclick=()=>{ handleAnswer(false); };
+
+/* ====== Modal helpers ====== */
+function showQuestion(){ questionView.style.display="block"; summaryView.style.display="none"; modal.style.display="flex"; }
+function showSummary(){
+  summaryText.innerHTML = `
+    Riktige svar: <b>${correctCount}</b><br>
+    Feil svar: <b>${wrongCount}</b><br>
+    Besvart med fasit: <b>${withFasitAttempts}</b><br>
+    Besvart uten fasit: <b>${withoutFasitAttempts}</b>
+  `;
+  questionView.style.display="none"; summaryView.style.display="block"; modal.style.display="flex";
+}
+function hideModal(){ modal.style.display="none"; }
 
 /* ====== Liv / slutt ====== */
 function loseLife(reason){
-  lives--; ui.lives.textContent = "❤".repeat(Math.max(lives,0));
+  lives--; ui.lives.textContent="❤".repeat(Math.max(lives,0));
   toast(`${reason} –1 liv`, false, 1100);
-  if(lives<=0){
-    // Hvis man dør før alle epler er tatt, vis “game over” og tilbud restart
-    paused=true;
-    const best = Number(localStorage.getItem(LS_KEY)||0);
-    if(score>best){ localStorage.setItem(LS_KEY,String(score)); ui.best.textContent = score; }
-    sumlist.innerHTML = `
-      <div>🕹️ Game over</div>
-      <div>Poeng: <b>${score}</b></div>
-      <div>Riktige: <b>${correct}</b></div>
-      <div>Feil: <b>${wrong}</b></div>
-      <div>Riktige uten fasit: <b>${correctWithoutFasit}</b></div>
-      <div>Riktige med fasit: <b>${correctWithFasit}</b></div>
-      <div>Gjenstående oppgaver: <b>${apples.length}</b></div>
-    `;
-    summary.style.display="flex";
-    return;
-  }
-  // myk reset av slange
-  snake=[{x:Math.floor(cols/2), y:Math.floor(rows/2)}];
-  dir={x:1,y:0}; nextDir={x:1,y:0}; growth=0;
+  if(lives<=0){ return gameOver(); }
+  snake=[{x:Math.floor(cols/2), y:Math.floor(rows/2)}]; dir={x:1,y:0}; nextDir={x:1,y:0}; growth=0;
+}
+function gameOver(){
+  paused=true;
+  const best=Number(localStorage.getItem(LS_KEY)||0);
+  if(score>best){ localStorage.setItem(LS_KEY,String(score)); ui.best.textContent=score; }
+  toast(`🕹️ Game over – Poeng: ${score}`, false, 1600);
+  // Vis start-overlay igjen for ny runde
+  ui.startOverlay.style.display="flex";
+  ui.start.textContent="Start / Restart";
 }
 
 /* ====== Kontroller ====== */
@@ -482,19 +444,12 @@ window.addEventListener('keydown',e=>{
 if(ui.up){ ui.up.onclick=()=>setDir(0,-1); ui.down.onclick=()=>setDir(0,1); ui.left.onclick=()=>setDir(-1,0); ui.right.onclick=()=>setDir(1,0); }
 
 /* ====== UI ====== */
-ui.start.onclick = ()=>{
-  speedMs = 1000/Number(ui.speed.value);
-  ui.speedShow.textContent = ui.speed.value;
-  reset();
-};
-ui.pause.onclick = ()=>{
-  paused = !paused;
-  ui.pause.textContent = paused ? "Fortsett" : "Pause";
-};
-ui.speed.addEventListener('input', ()=>{
-  ui.speedShow.textContent = ui.speed.value;
-  speedMs = 1000/Number(ui.speed.value);
-});
+function startGame(){ speedMs=1000/Number(ui.speed.value); if(ui.speedShow) ui.speedShow.textContent=ui.speed.value; reset(); }
+if(ui.start) ui.start.onclick = startGame;
+if(ui.bigStart) ui.bigStart.onclick = startGame;
+if(ui.pause) ui.pause.onclick = ()=>{ paused=!paused; ui.pause.textContent=paused?"Fortsett":"Pause"; };
+if(ui.speed) ui.speed.addEventListener('input', ()=>{ if(ui.speedShow) ui.speedShow.textContent=ui.speed.value; speedMs=1000/Number(ui.speed.value); });
+restartAll.onclick = ()=>{ hideModal(); startGame(); };
 
 /* ====== Boot ====== */
 fitCanvas(); draw();
