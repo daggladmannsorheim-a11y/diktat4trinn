@@ -13,15 +13,8 @@
   h1{margin:0;font-size:18px}
   .muted{color:var(--muted);font-size:14px}
 
-  /* Øvre seksjon: brett + tommel-pad under */
-  .wrap{
-    padding:8px;
-    display:flex;
-    flex-direction:column;
-    gap:8px;
-  }
+  .wrap{padding:8px;display:flex;flex-direction:column;gap:8px}
 
-  /* Canvas-område */
   #canvasWrap{
     position:relative;
     background: radial-gradient(900px 420px at 30% -8%, #18234a, #0c1020 60%);
@@ -32,7 +25,6 @@
     width:100%; height:auto; aspect-ratio:3/2; background:#0a1020;
     border:1px solid #1b274b; border-radius:10px; touch-action:none; display:block;
   }
-  /* Start-overlay: ikke blokkér annet, men knappen klikker */
   #startOverlay{
     position:absolute; inset:6px; display:flex; align-items:center; justify-content:center;
     background:rgba(0,0,0,.35); border-radius:10px; z-index:5; pointer-events:none;
@@ -42,10 +34,7 @@
     background:#1b3b2e; color:#fff; border:1px solid #225a42; font-weight:800;
   }
 
-  /* Tommel-pad rett under brettet */
-  #thumbpad{
-    display:grid; place-items:center; gap:8px; user-select:none;
-  }
+  #thumbpad{display:grid; place-items:center; gap:8px; user-select:none}
   #thumbpad .row{display:flex; gap:10px; justify-content:center}
   #thumbpad button{
     width:min(20vw,78px); height:min(20vw,78px);
@@ -57,7 +46,6 @@
     #thumbpad button{ width:62px; height:62px; font-size:24px; border-radius:10px }
   }
 
-  /* Info- og kontrollseksjon under */
   .under{padding:4px 8px 12px}
   #meta{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
   .chip{display:inline-flex;gap:6px;align-items:center;background:#1a2240;border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-size:14px}
@@ -66,7 +54,12 @@
   button:active{transform:translateY(1px)} .btn-prim{background:#1b3b2e;border-color:#225a42}
   label.pill{display:inline-flex;align-items:center;gap:6px;background:#1a2240;border:1px solid var(--line);border-radius:999px;padding:5px 10px;font-size:14px}
 
-  /* Modal */
+  /* Liten blipp ved poengfeltet */
+  #scoreBlip{
+    margin-left:6px; font-weight:800; opacity:0; transition:transform .25s ease, opacity .25s ease;
+  }
+  #scoreBlip.show{ opacity:1; transform:translateY(-6px) }
+
   #modal{position:fixed; inset:0; background:rgba(0,0,0,.55); display:none; align-items:center; justify-content:center; z-index:50; padding:10px}
   #card{width:min(94vw,620px); background:#0f1734; border:1px solid #2a3a68; border-radius:14px; padding:14px; box-shadow:0 10px 30px rgba(0,0,0,.35)}
   .qTitle{margin:0 0 8px; font-size:clamp(18px,3.8vw,22px); font-weight:800}
@@ -80,7 +73,6 @@
   th,td{border:1px solid #2a3a68; padding:6px 8px; text-align:left}
   th{background:#1a2240}
 
-  /* Små mobiler: litt tettere typografi */
   @media (max-width:420px){
     header h1{font-size:16px}
     .chip{font-size:12px; padding:3px 8px}
@@ -96,13 +88,11 @@
 </header>
 
 <section class="wrap">
-  <!-- Spillbrett -->
   <div id="canvasWrap">
     <canvas id="game" width="900" height="600" aria-label="Snake-spill"></canvas>
     <div id="startOverlay"><button id="bigStart" type="button">Start spillet</button></div>
   </div>
 
-  <!-- Tommel-pad rett under brettet -->
   <div id="thumbpad" aria-label="Piltaster">
     <div class="row"><button id="up"   type="button">⬆️</button></div>
     <div class="row">
@@ -113,10 +103,9 @@
   </div>
 </section>
 
-<!-- Alt annet under -->
 <section class="under">
   <div id="meta">
-    <span class="chip">Poeng: <b id="score">0</b></span>
+    <span class="chip">Poeng: <b id="score">0</b><span id="scoreBlip"></span></span>
     <span class="chip">Liv: <b id="lives">❤❤❤</b></span>
     <span class="chip">Fart: <b id="speedShow">6</b></span>
     <span class="chip">Topp: <b id="best">0</b></span>
@@ -132,7 +121,6 @@
   </div>
 </section>
 
-<!-- Modal: spørsmål + fasit + oppsummering -->
 <div id="modal">
   <div id="card">
     <div id="questionView">
@@ -159,6 +147,10 @@
 </div>
 
 <script>
+/* ====== Konstanter for poeng ====== */
+const POINT_NOFASIT = 10;
+const POINT_FASIT   = 5;
+
 /* ====== Gloser uke 45 ====== */
 const PAIRS = [
   {en:"Decent", no:"ordentlig"},
@@ -177,7 +169,8 @@ const PAIRS = [
 const $ = id => document.getElementById(id);
 const cv = $('game'), ctx = cv.getContext('2d');
 const ui = {
-  score:$('score'), lives:$('lives'), best:$('best'),
+  score:$('score'), scoreBlip:$('scoreBlip'),
+  lives:$('lives'), best:$('best'),
   speed:$('speed'), speedShow:$('speedShow'),
   start:$('start'), pause:$('pause'),
   up:$('up'), down:$('down'), left:$('left'), right:$('right'),
@@ -189,7 +182,7 @@ const modal=$('modal'), questionView=$('questionView'), summaryView=$('summaryVi
       norw=$('norw'), ans=$('ans'), btnCheck=$('check'), btnSkip=$('skip'),
       btnToggleQFasit=$('toggleQFasit'), qFasitDiv=$('qFasit');
 
-const LS_KEY="snake45_best_mobile_thumbpad";
+const LS_KEY="snake45_best_mobile_thumbpad_points";
 ui.best.textContent = localStorage.getItem(LS_KEY) || 0;
 
 /* ====== Fasit-tabell ====== */
@@ -199,14 +192,13 @@ qFasitDiv.innerHTML = `<table>
 </table>`;
 
 /* ====== Canvas sizing + grid ====== */
-/* Mindre rutenett på PC, større (færre ruter) på små mobiler → enklere å treffe */
 let gridBase = (window.innerWidth <= 480) ? 30 : 26;
 let grid = gridBase, cols = Math.floor(cv.width / grid), rows = Math.floor(cv.height / grid);
 
 function fitCanvas(){
   const wrap = document.getElementById('canvasWrap');
   const bw = wrap.clientWidth - 12;
-  const vw = Math.min(bw, 1200); // ikke altfor bredt på store skjermer
+  const vw = Math.min(bw, 1200);
   const vh = Math.round(vw * 2/3);
   cv.style.width = vw + 'px';
   cv.style.height = vh + 'px';
@@ -231,6 +223,14 @@ function toast(msg, ok=true, t=1100){
   e.style.color="#fff"; e.style.padding="12px 16px"; e.style.borderRadius="12px";
   e.style.fontSize="20px"; e.style.fontWeight="800"; e.style.boxShadow="0 0 20px rgba(0,0,0,.5)"; e.style.zIndex=200;
   document.body.appendChild(e); setTimeout(()=>e.remove(), t);
+}
+function blip(scoreGain){
+  ui.scoreBlip.textContent = scoreGain>0 ? `+${scoreGain}` : '';
+  ui.scoreBlip.style.color = scoreGain===POINT_NOFASIT ? '#42d392' : '#ffbb55';
+  ui.scoreBlip.classList.remove('show');
+  void ui.scoreBlip.offsetWidth; // reflow
+  ui.scoreBlip.classList.add('show');
+  setTimeout(()=>ui.scoreBlip.classList.remove('show'), 500);
 }
 
 /* ====== Spilltilstand ====== */
@@ -269,7 +269,7 @@ function reset(){
   snake=[{x:Math.floor(cols/2), y:Math.floor(rows/2)}];
   dir={x:1,y:0}; nextDir={x:1,y:0};
   score=0; lives=3; growth=0;
-  ui.score.textContent=score; ui.lives.textContent="❤❤❤";
+  ui.score.textContent=score; ui.lives.textContent="❤❤❤"; blip(0);
   resetStats(); placeAllApples();
   paused=false; ui.start.textContent="Restart"; ui.startOverlay.style.display="none";
   cancelAnimationFrame(loopId); draw(); loopId=requestAnimationFrame(tick);
@@ -348,8 +348,10 @@ function handleAnswer(ok){
   if(usedFasitThisRound) withFasitAttempts++; else withoutFasitAttempts++;
   if(ok){
     correctCount++;
-    const add = usedFasitThisRound ? 5 : 10;
-    score += add; ui.score.textContent=score;
+    const add = usedFasitThisRound ? POINT_FASIT : POINT_NOFASIT; // 5 / 10
+    score += add;
+    ui.score.textContent = score;
+    blip(add); // liten +5/+10 blipp
     growth += 2; speedMs=Math.max(1000/16, speedMs*0.985);
     toast(usedFasitThisRound ? `✅ Riktig! +${add} (fasit brukt)` : `✅ Riktig! +${add}`, true);
   }else{
@@ -370,13 +372,15 @@ function showSummary(){
     Riktige svar: <b>${correctCount}</b><br>
     Feil svar: <b>${wrongCount}</b><br>
     Besvart med fasit: <b>${withFasitAttempts}</b><br>
-    Besvart uten fasit: <b>${withoutFasitAttempts}</b>
+    Besvart uten fasit: <b>${withoutFasitAttempts}</b><br>
+    <hr style="border:none;border-top:1px solid #2a3a68;margin:8px 0">
+    Sluttscore: <b>${score}</b>
   `;
   questionView.style.display="none"; summaryView.style.display="block"; modal.style.display="flex";
 }
-function hideModal(){ modal.style.display="none"; }
 
 /* ====== Liv / slutt ====== */
+function hideModal(){ modal.style.display="none"; }
 function loseLife(reason){
   lives--; ui.lives.textContent="❤".repeat(Math.max(lives,0));
   toast(`${reason} –1 liv`, false);
