@@ -57,7 +57,8 @@ th{background:#1a2240}
   <span class="chip">Poeng: <b id="score">0</b></span>
   <span class="chip">Liv: <b id="lives">❤❤❤</b></span>
   <span class="chip">Fart: <b id="speedShow">7</b></span>
-  <span class="chip">Topp: <b id="best">0</b></span><br>
+  <span class="chip">Topp: <b id="best">0</b></span>
+  <span class="chip">Igjen: <b id="left">0</b></span><br>
   <button id="start" class="btn-prim">Start / Restart</button>
   <button id="pause">Pause</button>
   <label class="pill">Fart <input id="speed" type="range" min="4" max="16" value="7"></label>
@@ -125,7 +126,8 @@ document.getElementById("toggleFasit").onclick=function(e){var open=f.style.disp
 var cv=document.getElementById('game'),ctx=cv.getContext('2d');cv.setAttribute('tabindex','0');
 var ui={score:document.getElementById('score'),lives:document.getElementById('lives'),best:document.getElementById('best'),
          speed:document.getElementById('speed'),speedShow:document.getElementById('speedShow'),
-         start:document.getElementById('start'),pause:document.getElementById('pause')};
+         start:document.getElementById('start'),pause:document.getElementById('pause'),
+         left:document.getElementById('left')};
 var modal=document.getElementById('modal'),norw=document.getElementById('norw'),ans=document.getElementById('ans'),
     checkBtn=document.getElementById('check'),skipBtn=document.getElementById('skip'),showHint=document.getElementById('showHint'),
     hint=document.getElementById('hint');
@@ -171,14 +173,16 @@ function fmtTime(ms){var s=Math.floor(ms/1000),m=Math.floor(s/60);s%=60;return m
 
 /* Runde/statistikk */
 var snake,dir,nextDir,apple,score,lives,paused=true,loopId=null,lastTick=0,speedMs=1000/7;
-var growth=0,current=null,usedHint=false;
+var growth=0,currentObj=null,usedHint=false;
 var remaining=[], stats=null, mistakes=[]; // mistakes = liste over feil
+var currentIdx=-1;
 
 function newStats(){
   return {start:Date.now(), end:0,
           ok_nohint:0, ok_hint:0, bad_nohint:0, bad_hint:0,
           points:0};
 }
+function updateLeft(){ ui.left.textContent=String(remaining.length); }
 
 /* Start/reset */
 function copy(pt){return{x:pt.x,y:pt.y};}
@@ -189,6 +193,7 @@ function reset(){
   remaining=PAIRS.slice();
   stats=newStats();
   mistakes=[];
+  updateLeft();
 
   snake=[{x:Math.floor(cols/2),y:Math.floor(rows/2)}];
   dir={x:1,y:0};nextDir={x:1,y:0};score=0;lives=3;growth=0;
@@ -214,6 +219,11 @@ function draw(){
 /* Loop */
 function tick(ts){
   fit();
+  /* SIKKERHET: om alt er brukt, avslutt runden selv om noe skulle være “paused” feil */
+  if(remaining.length===0 && summary.style.display!=="flex"){
+    endRound(); return;
+  }
+
   if(paused){draw();loopId=requestAnimationFrame(tick);return;}
   if(ts-lastTick<speedMs){loopId=requestAnimationFrame(tick);return;}
   lastTick=ts;
@@ -238,8 +248,6 @@ function tick(ts){
 }
 
 /* Spørsmål */
-var currentIdx=-1; // indeks i remaining
-var currentObj=null;
 function pick(){
   if(remaining.length===0) return null;
   var idx=rand(remaining.length);
@@ -256,22 +264,31 @@ function ask(){
 function registerMistake(userAns){
   mistakes.push({en:currentObj.en,no:currentObj.no,usedHint:usedHint,answer:userAns||""});
 }
+function removeCurrent(){
+  if(currentIdx>-1 && remaining.length>0){
+    remaining.splice(currentIdx,1);
+    currentIdx=-1;
+    updateLeft();
+  }
+}
 function handle(ok){
   var userAns=ans.value||"";
   modal.style.display="none";
   try{cv.focus();}catch(e){}
   var pts=usedHint?5:10;
+
   if(ok){
     score+=pts; ui.score.textContent=String(score); growth+=2; speedMs=Math.max(1000/16,speedMs*0.985);
     if(usedHint) stats.ok_hint++; else stats.ok_nohint++;
-    stats.points=score;
-    flash("Riktig +"+pts,true);
+    stats.points=score; flash("Riktig +"+pts,true);
   }else{
     if(usedHint) stats.bad_hint++; else stats.bad_nohint++;
     registerMistake(userAns);
     loseLife("Feil");
+    if(lives<=0){ return; } /* endRound() kalles i loseLife */
   }
-  if(currentIdx>-1 && remaining.length>0){ remaining.splice(currentIdx,1); currentIdx=-1; }
+
+  removeCurrent();
 
   if(remaining.length===0){ endRound(); return; }
 
@@ -288,7 +305,8 @@ document.getElementById('skip').onclick=function(){
   modal.style.display="none"; try{cv.focus();}catch(e){}
   stats.bad_nohint++; registerMistake("(hoppet over)");
   loseLife("Hoppet over");
-  if(currentIdx>-1 && remaining.length>0){ remaining.splice(currentIdx,1); currentIdx=-1; }
+  if(lives<=0){ return; }
+  removeCurrent();
   if(remaining.length===0){ endRound(); return; }
   placeApple(); paused=false;
 };
@@ -296,9 +314,11 @@ document.getElementById('skip').onclick=function(){
 /* Liv */
 function loseLife(r){
   lives--; ui.lives.textContent=hearts(Math.max(lives,0)); flash(r+"! – 1 liv", false, 1000);
-  if(lives<=0){ endRound(true); return; }
+  if(lives<=0){ endRound(); return; }
   snake=[{x:Math.floor(cols/2),y:Math.floor(rows/2)}]; dir={x:1,y:0}; nextDir={x:1,y:0}; growth=0;
 }
+
+/* Oppsummering */
 function buildMistakesTable(){
   if(!mistakes.length){
     mistakesDiv.innerHTML="<p class='good'>Ingen feil – bra jobba!</p>";
@@ -314,15 +334,17 @@ function buildMistakesTable(){
 }
 function endRound(){
   paused=true;
-  stats.end=Date.now();
+  var now=Date.now();
+  if(stats && !stats.end){ stats.end=now; }
   var best=parseInt(lsGet(LS_KEY)||"0",10)||0;
   if(score>best){ lsSet(LS_KEY,String(score)); ui.best.textContent=String(score); }
-  sumEl.ok_nohint.textContent=String(stats.ok_nohint);
-  sumEl.ok_hint.textContent=String(stats.ok_hint);
-  sumEl.bad_nohint.textContent=String(stats.bad_nohint);
-  sumEl.bad_hint.textContent=String(stats.bad_hint);
-  sumEl.pts.textContent=String(score);
-  sumEl.time.textContent=fmtTime(stats.end - stats.start);
+  sumEl.ok_nohint.textContent=String(stats.ok_nohint||0);
+  sumEl.ok_hint.textContent=String(stats.ok_hint||0);
+  sumEl.bad_nohint.textContent=String(stats.bad_nohint||0);
+  sumEl.bad_hint.textContent=String(stats.bad_hint||0);
+  sumEl.pts.textContent=String(score||0);
+  var elapsed = (stats && stats.start)? (now - stats.start) : 0;
+  sumEl.time.textContent=fmtTime(elapsed);
   buildMistakesTable();
   mistakesDiv.style.display="none";
   toggleMistakesBtn.textContent="Vis feilgloser ▼";
