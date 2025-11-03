@@ -11,72 +11,38 @@
   --line:#223059;--good:#42d392;--bad:#ff6b6b;
 }
 *{box-sizing:border-box}
-html,body{
-  margin:0;height:100%;
-  background:#0c1020;color:var(--ink);
-  font:16px system-ui,Segoe UI,Roboto,Arial;
-  overflow:hidden;
-}
-header{
-  position:sticky;top:0;text-align:center;
-  background:#151a2b;border-bottom:1px solid var(--line);
-  padding:8px 14px;
-}
-h1{margin:0;font-size:18px}
-.muted{color:var(--muted);font-size:14px}
+html,body{margin:0;height:100%;background:#0c1020;color:var(--ink);
+  font:16px system-ui,Segoe UI,Roboto,Arial;overflow:hidden}
+header{text-align:center;background:#151a2b;border-bottom:1px solid var(--line);padding:8px 14px}
+h1{margin:0;font-size:18px}.muted{color:var(--muted);font-size:14px}
 .wrap{max-width:960px;margin:auto;padding:6px}
-#canvasWrap{
-  background:radial-gradient(1000px 480px at 30% -8%,#18234a,#0c1020 60%);
-  border:1px solid var(--line);border-radius:12px;padding:6px;margin:auto
-}
-canvas{
-  display:block;width:100%;height:auto;
-  background:#0a1020;border:1px solid #1b274b;
-  border-radius:10px;touch-action:none
-}
+#canvasWrap{background:radial-gradient(1000px 480px at 30% -8%,#18234a,#0c1020 60%);
+  border:1px solid var(--line);border-radius:12px;padding:6px;margin:auto}
+canvas{display:block;width:100%;height:auto;background:#0a1020;
+  border:1px solid #1b274b;border-radius:10px;touch-action:none}
 #mobControls{display:grid;place-items:center;margin-top:8px}
 #mobControls .row{display:flex;gap:14px;justify-content:center;margin-top:6px}
-#mobControls button{
-  width:70px;height:70px;font-size:30px;border-radius:14px;
-  background:#1a274b;color:#fff;border:1px solid #223059;
-}
+#mobControls button{width:70px;height:70px;font-size:30px;border-radius:14px;
+  background:#1a274b;color:#fff;border:1px solid #223059;}
 #mobControls button:active{transform:scale(.95)}
 @media(min-width:900px){#mobControls{display:none}}
-#ui{
-  background:var(--panel);border:1px solid var(--line);
-  border-radius:12px;padding:8px;text-align:center;margin-top:8px
-}
-.chip{
-  display:inline-flex;gap:6px;align-items:center;
-  background:#1a2240;border:1px solid var(--line);
-  border-radius:999px;padding:4px 10px;margin:2px 3px;font-size:15px
-}
-button{
-  appearance:none;background:#1b274b;color:var(--ink);
-  border:1px solid var(--line);padding:8px 12px;border-radius:10px;
-  font-weight:700;font-size:15px;cursor:pointer
-}
+#ui{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px;text-align:center;margin-top:8px}
+.chip{display:inline-flex;gap:6px;align-items:center;background:#1a2240;border:1px solid var(--line);
+  border-radius:999px;padding:4px 10px;margin:2px 3px;font-size:15px}
+button{appearance:none;background:#1b274b;color:var(--ink);border:1px solid var(--line);
+  padding:8px 12px;border-radius:10px;font-weight:700;font-size:15px;cursor:pointer}
 button:active{transform:translateY(1px)}
 .btn-prim{background:#1b3b2e;border-color:#225a42}
-#modal{
-  position:fixed;inset:0;background:rgba(0,0,0,.55);
-  display:none;align-items:center;justify-content:center;z-index:50
-}
-#card{
-  width:min(92vw,460px);background:#0f1734;
-  border:1px solid #2a3a68;border-radius:14px;padding:14px;
-  box-shadow:0 10px 30px rgba(0,0,0,.35);text-align:center
-}
-#ans{
-  width:100%;padding:12px 14px;font-size:18px;border-radius:10px;
-  border:1px solid #2a3a68;background:#101833;color:#fff
-}
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:50}
+#card{width:min(92vw,460px);background:#0f1734;border:1px solid #2a3a68;border-radius:14px;
+  padding:14px;box-shadow:0 10px 30px rgba(0,0,0,.35);text-align:center}
+#ans{width:100%;padding:12px 14px;font-size:18px;border-radius:10px;
+  border:1px solid #2a3a68;background:#101833;color:#fff}
 .row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;justify-content:center}
 .good{color:var(--good)}.bad{color:var(--bad)}
-#fasitWrap{margin-top:12px;text-align:center}
-table{
-  width:100%;border-collapse:collapse;font-size:15px;margin-top:6px
-}
+#hint{display:none;margin-top:8px;color:var(--muted);font-style:italic}
+#fasitWrap{text-align:center;margin-top:12px}
+table{width:100%;border-collapse:collapse;font-size:15px;margin-top:6px}
 th,td{border:1px solid #2a3a68;padding:6px 8px;text-align:left}
 th{background:#1a2240}
 </style>
@@ -87,9 +53,7 @@ th{background:#1a2240}
   <div class="muted">Spis 🍎 for spørsmål. Svar riktig for å vokse – fungerer på mobil og PC!</div>
 </header>
 
-<div class="wrap" id="canvasWrap">
-  <canvas id="game" width="720" height="480"></canvas>
-</div>
+<div class="wrap" id="canvasWrap"><canvas id="game" width="720" height="480"></canvas></div>
 
 <!-- Mobil piltaster -->
 <div id="mobControls">
@@ -112,7 +76,7 @@ th{background:#1a2240}
   <label class="pill">Fart <input id="speed" type="range" min="4" max="16" value="7"></label>
 </div>
 
-<!-- Fasit -->
+<!-- Fasit under -->
 <div id="fasitWrap" class="wrap">
   <button id="toggleFasit" class="btn-prim">Vis fasit ▼</button>
   <div id="fasit" style="display:none"></div>
@@ -122,16 +86,18 @@ th{background:#1a2240}
 <div id="modal">
   <div id="card">
     <p>Skriv engelsk for: <span id="norw" class="good"></span></p>
-    <input id="ans" type="text" inputmode="latin" autocomplete="off" autocapitalize="none" spellcheck="false">
+    <input id="ans" type="text" autocomplete="off" autocapitalize="none" spellcheck="false">
+    <div id="hint"></div>
     <div class="row">
       <button id="check" class="btn-prim">Sjekk</button>
+      <button id="showHint">Vis fasit</button>
       <button id="skip">Hopp over (–1 liv)</button>
     </div>
   </div>
 </div>
 
 <script>
-/* --- Gloser uke 45 --- */
+/* --- Gloser --- */
 const PAIRS=[
  {en:"Decent",no:"ordentlig"},
  {en:"Grin",no:"smil"},
@@ -145,13 +111,13 @@ const PAIRS=[
  {en:"Knickers",no:"underbukser"}
 ];
 
-/* --- Fasit-tabell --- */
+/* --- Fasit-tabell under spillet --- */
 const f=document.getElementById("fasit");
 f.innerHTML=`<table><tr><th>Engelsk</th><th>Norsk</th></tr>${PAIRS.map(p=>`<tr><td>${p.en}</td><td>${p.no}</td></tr>`).join("")}</table>`;
 document.getElementById("toggleFasit").onclick=(e)=>{
-  const open=f.style.display==="none";
-  f.style.display=open?"block":"none";
-  e.target.textContent=open?"Skjul fasit ▲":"Vis fasit ▼";
+ const open=f.style.display==="none";
+ f.style.display=open?"block":"none";
+ e.target.textContent=open?"Skjul fasit ▲":"Vis fasit ▼";
 };
 
 /* --- DOM --- */
@@ -161,7 +127,9 @@ const ui={score:document.getElementById('score'),lives:document.getElementById('
   speedShow:document.getElementById('speedShow'),start:document.getElementById('start'),
   pause:document.getElementById('pause')};
 const modal=document.getElementById('modal'),norw=document.getElementById('norw'),
-ans=document.getElementById('ans'),checkBtn=document.getElementById('check'),skipBtn=document.getElementById('skip');
+ans=document.getElementById('ans'),checkBtn=document.getElementById('check'),
+skipBtn=document.getElementById('skip'),showHint=document.getElementById('showHint'),
+hint=document.getElementById('hint');
 const LS_KEY="snake45_best";
 ui.best.textContent=localStorage.getItem(LS_KEY)||0;
 
@@ -170,10 +138,7 @@ let grid=24,cols=Math.floor(cv.width/grid),rows=Math.floor(cv.height/grid);
 function fit(){
   const r=cv.getBoundingClientRect(),ratio=window.devicePixelRatio||1;
   const w=Math.floor(r.width*ratio),h=Math.floor(w*2/3);
-  if(cv.width!==w||cv.height!==h){
-    cv.width=w;cv.height=h;
-    cols=Math.floor(w/grid);rows=Math.floor(h/grid);
-  }
+  if(cv.width!==w||cv.height!==h){cv.width=w;cv.height=h;cols=Math.floor(w/grid);rows=Math.floor(h/grid);}
 }
 window.addEventListener('resize',fit);
 
@@ -182,29 +147,25 @@ const rand=n=>Math.floor(Math.random()*n);
 const norm=s=>s.trim().toLowerCase().replace(/\s+/g," ");
 function flash(msg,ok=true,t=900){
   const e=document.createElement('div');e.textContent=msg;
-  e.style.position="fixed";e.style.left="50%";e.style.top="12px";
-  e.style.transform="translateX(-50%)";
+  e.style.position="fixed";e.style.left="50%";e.style.top="12px";e.style.transform="translateX(-50%)";
   e.style.background=ok?"#1f503a":"#5b2230";e.style.color="#fff";
   e.style.padding="10px 14px";e.style.borderRadius="10px";
   e.style.border="1px solid rgba(255,255,255,.15)";e.style.zIndex=99;
   document.body.appendChild(e);setTimeout(()=>e.remove(),t);
 }
 
-/* --- Game state --- */
+/* --- Spilltilstand --- */
 let snake,dir,nextDir,apple,score,lives,paused=true,loopId=null,lastTick=0,speedMs=1000/7;
-let growth=0,current=null;
+let growth=0,current=null,usedHint=false;
 
 /* --- Start/reset --- */
 function freeCell(){let x,y;do{x=rand(cols);y=rand(rows);}while(snake.some(s=>s.x===x&&s.y===y));return{x,y};}
 function placeApple(){apple=freeCell();}
 function reset(){
-  fit();
-  snake=[{x:Math.floor(cols/2),y:Math.floor(rows/2)}];
-  dir={x:1,y:0};nextDir={x:1,y:0};
-  score=0;lives=3;growth=0;
+  fit();snake=[{x:Math.floor(cols/2),y:Math.floor(rows/2)}];
+  dir={x:1,y:0};nextDir={x:1,y:0};score=0;lives=3;growth=0;
   ui.score.textContent=score;ui.lives.textContent="❤❤❤";
-  placeApple();paused=false;
-  cancelAnimationFrame(loopId);draw();loopId=requestAnimationFrame(tick);
+  placeApple();paused=false;cancelAnimationFrame(loopId);draw();loopId=requestAnimationFrame(tick);
 }
 
 /* --- Tegning --- */
@@ -219,12 +180,8 @@ function draw(){
   snake.forEach((s,i)=>{
     const x=s.x*grid,y=s.y*grid;
     ctx.fillRect(x+2,y+2,grid-4,grid-4);
-    if(i===0){
-      ctx.fillStyle="#0b1020";
-      ctx.fillRect(x+6,y+8,3,3);
-      ctx.fillRect(x+grid-9,y+8,3,3);
-      ctx.fillStyle="#79c8ff";
-    }
+    if(i===0){ctx.fillStyle="#0b1020";ctx.fillRect(x+6,y+8,3,3);
+      ctx.fillRect(x+grid-9,y+8,3,3);ctx.fillStyle="#79c8ff";}
   });
 }
 
@@ -248,31 +205,30 @@ function tick(ts){
 /* --- Spørsmål --- */
 function pick(){return PAIRS[rand(PAIRS.length)];}
 function askQuestion(){
-  current=pick();
-  norw.textContent=current.no;
-  ans.value="";
-  modal.style.display="flex";
-  ans.focus();
+  current=pick();usedHint=false;
+  norw.textContent=current.no;ans.value="";hint.style.display="none";
+  modal.style.display="flex";ans.focus();
 }
 function handleAnswer(ok){
   modal.style.display="none";
-  if(ok){
-    score+=10;ui.score.textContent=score;
-    growth+=2;speedMs=Math.max(1000/16,speedMs*0.985);
-    flash("Riktig +10 og vekst",true);
-  }else loseLife("Feil svar");
+  const pts=usedHint?5:10;
+  if(ok){score+=pts;ui.score.textContent=score;growth+=2;
+    speedMs=Math.max(1000/16,speedMs*0.985);
+    flash(ok?`Riktig +${pts}`:"",true);}
+  else loseLife("Feil svar");
   placeApple();paused=false;
 }
 function check(){if(!current)return;handleAnswer(norm(ans.value)===norm(current.en));}
 checkBtn.onclick=check;
 ans.addEventListener("keydown",e=>{if(e.key==="Enter")check();});
-skipBtn.onclick=()=>{
-  modal.style.display="none";
-  loseLife("Hoppet over");
-  placeApple();paused=false;
+skipBtn.onclick=()=>{modal.style.display="none";loseLife("Hoppet over");placeApple();paused=false;};
+showHint.onclick=()=>{
+  usedHint=true;
+  hint.style.display="block";
+  hint.textContent=`Fasit: ${current.en} (halv poeng)`;
 };
 
-/* --- Liv og slutt --- */
+/* --- Liv --- */
 function loseLife(r){
   lives--;
   ui.lives.textContent="❤".repeat(Math.max(lives,0));
@@ -284,10 +240,7 @@ function loseLife(r){
 function gameOver(){
   paused=true;
   const best=Number(localStorage.getItem(LS_KEY)||0);
-  if(score>best){
-    localStorage.setItem(LS_KEY,String(score));
-    ui.best.textContent=score;
-  }
+  if(score>best){localStorage.setItem(LS_KEY,String(score));ui.best.textContent=score;}
   flash(`Game over – Poeng: ${score}`,false,1600);
 }
 
