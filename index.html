@@ -107,10 +107,10 @@ var modal=document.getElementById('modal'),norw=document.getElementById('norw'),
 var LS_KEY="snake45_best";ui.best.textContent=lsGet(LS_KEY)||"0";
 
 /* Mindre spillflate */
-var grid=20;             /* mindre ruter */
+var grid=20;
 var cols=Math.floor(cv.width/grid), rows=Math.floor(cv.height/grid);
 
-/* Stabil fit (låser til max 480x320 inne i 640-wrap) */
+/* Stabil fit (låser til ~480×320) */
 function fit(){
   var w=Math.min(480, Math.max(360, Math.floor(document.getElementById('canvasWrap').getBoundingClientRect().width-12)));
   var h=Math.floor(w*2/3);
@@ -191,6 +191,12 @@ if(ok){score+=pts;ui.score.textContent=String(score);growth+=2;speedMs=Math.max(
 else{loseLife("Feil");}placeApple();paused=false;}
 function check(){if(!current)return;handle(norm(ans.value)===norm(current.en));}
 document.getElementById('check').onclick=function(){check();};
+ans.addEventListener('keydown',function(e){
+  /* Viktig: la input få mellomrom og piltaster */
+  e.stopPropagation();
+  /* (valgfritt) hindrer blockScrollKeys når fokus er i input og space trykkes */
+  // if((e.key||e.code||"") === " ") e.stopPropagation();
+});
 ans.addEventListener('keydown',function(e){if(e.key==="Enter"||e.keyCode===13)check();});
 document.getElementById('showHint').onclick=function(){usedHint=true;hint.style.display="block";hint.textContent="Fasit: "+current.en+" (5 poeng)";};
 document.getElementById('skip').onclick=function(){modal.style.display="none";try{cv.focus();}catch(e){};loseLife("Hoppet over");placeApple();paused=false;};
