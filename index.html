@@ -78,7 +78,29 @@ th{background:#1a2240}
 </div>
 
 <script>
-/* ===== Data ===== */
+/* Polyfill for eldre miljøer */
+(function(){
+  var lastTime=0;
+  var vendors=['ms','moz','webkit','o'];
+  for(var x=0;x<vendors.length && !window.requestAnimationFrame;x++){
+    window.requestAnimationFrame=window[vendors[x]+'RequestAnimationFrame'];
+    window.cancelAnimationFrame=window[vendors[x]+'CancelAnimationFrame'] || window[vendors[x]+'CancelRequestAnimationFrame'];
+  }
+  if(!window.requestAnimationFrame){
+    window.requestAnimationFrame=function(cb){var curr=Date.now(),timeToCall=Math.max(0,16-(curr-lastTime));var id=window.setTimeout(function(){cb(curr+timeToCall);}, timeToCall);lastTime=curr+timeToCall;return id;};
+  }
+  if(!window.cancelAnimationFrame){
+    window.cancelAnimationFrame=function(id){clearTimeout(id);};
+  }
+})();
+
+/* Sikker localStorage */
+var LS_OK=true;
+try{ localStorage.setItem('__t','1'); localStorage.removeItem('__t'); }catch(e){ LS_OK=false; }
+function lsGet(k){ if(!LS_OK) return "0"; try{ return localStorage.getItem(k); }catch(e){ return "0"; } }
+function lsSet(k,v){ if(!LS_OK) return; try{ localStorage.setItem(k,v); }catch(e){} }
+
+/* Gloser */
 var PAIRS=[
  {en:"Decent",no:"ordentlig"},
  {en:"Grin",no:"smil"},
@@ -92,11 +114,11 @@ var PAIRS=[
  {en:"Knickers",no:"underbukser"}
 ];
 
-/* ===== Fasit-tabell (under) ===== */
+/* Fasit-tabell */
 var f=document.getElementById("fasit");
 (function(){
   var html="<table><tr><th>Engelsk</th><th>Norsk</th></tr>";
-  for(var i=0;i<PAIRS.length;i++){html+="<tr><td>"+PAIRS[i].en+"</td><td>"+PAIRS[i].no+"</td></tr>";}
+  for(var i=0;i<PAIRS.length;i++){ html+="<tr><td>"+PAIRS[i].en+"</td><td>"+PAIRS[i].no+"</td></tr>"; }
   html+="</table>";
   f.innerHTML=html;
 })();
@@ -106,8 +128,9 @@ document.getElementById("toggleFasit").onclick=function(e){
   e.target.textContent=open?"Skjul fasit ▲":"Vis fasit ▼";
 };
 
-/* ===== DOM ===== */
+/* DOM */
 var cv=document.getElementById('game'), ctx=cv.getContext('2d');
+cv.setAttribute('tabindex','0');
 var ui={
   score:document.getElementById('score'),
   lives:document.getElementById('lives'),
@@ -126,13 +149,15 @@ var modal=document.getElementById('modal'),
     hint=document.getElementById('hint');
 
 var LS_KEY="snake45_best";
-ui.best.textContent=localStorage.getItem(LS_KEY)||"0";
+ui.best.textContent=lsGet(LS_KEY)||"0";
 
-/* ===== Canvas-resize (Edge-safe) ===== */
+/* Canvas-resize (defensiv) */
 var grid=24, cols=Math.floor(cv.width/grid), rows=Math.floor(cv.height/grid);
 function fit(){
   var parent=cv.parentElement;
-  var w = parent && parent.getBoundingClientRect ? Math.floor(parent.getBoundingClientRect().width) : cv.clientWidth;
+  var w = 0;
+  if(parent && parent.getBoundingClientRect){ w = Math.floor(parent.getBoundingClientRect().width); }
+  if(!w || w<320){ w = cv.clientWidth||720; }
   if(!w || w<320){ w = 720; }
   var h = Math.floor(w*2/3);
   if(cv.width!==w || cv.height!==h){
@@ -142,7 +167,7 @@ function fit(){
 }
 window.addEventListener('resize', fit);
 
-/* ===== Utils ===== */
+/* Utils */
 function rand(n){ return Math.floor(Math.random()*n); }
 function norm(s){ return s.replace(/\s+/g," ").replace(/^\s+|\s+$/g,"").toLowerCase(); }
 function hearts(n){ return new Array(n+1).join("❤"); }
@@ -155,11 +180,11 @@ function flash(msg,ok,t){
   document.body.appendChild(e); setTimeout(function(){ if(e&&e.parentNode) e.parentNode.removeChild(e); }, t);
 }
 
-/* ===== State ===== */
+/* State */
 var snake,dir,nextDir,apple,score,lives,paused=true,loopId=null,lastTick=0,speedMs=1000/7;
 var growth=0,current=null,usedHint=false;
 
-/* ===== Start/reset ===== */
+/* Start/reset */
 function copy(pt){ return {x:pt.x,y:pt.y}; }
 function freeCell(){
   var x,y,i,clash;
@@ -183,7 +208,7 @@ function reset(){
   cv.focus();
 }
 
-/* ===== Tegn ===== */
+/* Tegn */
 function draw(){
   ctx.fillStyle="#0a1020"; ctx.fillRect(0,0,cv.width,cv.height);
   ctx.strokeStyle="rgba(34,48,89,.6)";
@@ -204,7 +229,7 @@ function draw(){
   }
 }
 
-/* ===== Loop ===== */
+/* Loop */
 function tick(ts){
   fit();
   if(paused){ draw(); loopId=requestAnimationFrame(tick); return; }
@@ -218,7 +243,8 @@ function tick(ts){
   if(head.x<0) head.x=cols-1; else if(head.x>=cols) head.x=0;
   if(head.y<0) head.y=rows-1; else if(head.y>=rows) head.y=0;
 
-  for(var i=0;i<snake.length;i++){ if(snake[i].x===head.x && snake[i].y===head.y){ loseLife("Halen"); loopId=requestAnimationFrame(tick); return; } }
+  var i;
+  for(i=0;i<snake.length;i++){ if(snake[i].x===head.x && snake[i].y===head.y){ loseLife("Halen"); loopId=requestAnimationFrame(tick); return; } }
 
   snake.unshift(head);
 
@@ -231,17 +257,17 @@ function tick(ts){
   draw(); loopId=requestAnimationFrame(tick);
 }
 
-/* ===== Spørsmål ===== */
+/* Spørsmål */
 function pick(){ return PAIRS[rand(PAIRS.length)]; }
 function ask(){
   current=pick(); usedHint=false;
   norw.textContent=current.no; ans.value=""; hint.style.display="none";
   modal.style.display="flex";
-  setTimeout(function(){ ans.focus(); }, 50);
+  setTimeout(function(){ try{ ans.focus(); }catch(e){} }, 50);
 }
 function handle(ok){
   modal.style.display="none";
-  cv.focus();
+  try{ cv.focus(); }catch(e){}
   var pts=usedHint?5:10;
   if(ok){
     score+=pts; ui.score.textContent=String(score);
@@ -256,9 +282,9 @@ function check(){ if(!current) return; handle(norm(ans.value)===norm(current.en)
 checkBtn.onclick=function(){ check(); };
 ans.addEventListener('keydown', function(e){ if(e.key==="Enter" || e.keyCode===13) check(); });
 showHint.onclick=function(){ usedHint=true; hint.style.display="block"; hint.textContent="Fasit: "+current.en+" (5 poeng)"; };
-skipBtn.onclick=function(){ modal.style.display="none"; cv.focus(); loseLife("Hoppet over"); placeApple(); paused=false; };
+skipBtn.onclick=function(){ modal.style.display="none"; try{cv.focus();}catch(e){}; loseLife("Hoppet over"); placeApple(); paused=false; };
 
-/* ===== Liv ===== */
+/* Liv */
 function loseLife(r){
   lives--; ui.lives.textContent=hearts(Math.max(lives,0)); flash(r+"! – 1 liv", false, 1000);
   if(lives<=0){ return gameOver(); }
@@ -266,13 +292,12 @@ function loseLife(r){
 }
 function gameOver(){
   paused=true;
-  var bestStr=localStorage.getItem(LS_KEY)||"0";
-  var best=parseInt(bestStr,10)||0;
-  if(score>best){ localStorage.setItem(LS_KEY, String(score)); ui.best.textContent=String(score); }
+  var best=parseInt(lsGet(LS_KEY)||"0",10)||0;
+  if(score>best){ lsSet(LS_KEY, String(score)); ui.best.textContent=String(score); }
   flash("Game over – Poeng: "+score, false, 1600);
 }
 
-/* ===== Kontroller ===== */
+/* Kontroller */
 function setDir(dx,dy){ if(dx===-dir.x && dy===-dir.y) return; nextDir={x:dx,y:dy}; }
 window.addEventListener('keydown', function(e){
   var k=(e.key||e.code||"").toLowerCase();
@@ -286,7 +311,7 @@ document.getElementById('down').onclick=function(){ setDir(0,1); };
 document.getElementById('left').onclick=function(){ setDir(-1,0); };
 document.getElementById('right').onclick=function(){ setDir(1,0); };
 
-/* ===== UI ===== */
+/* UI */
 ui.start.onclick=function(){
   speedMs=1000/Number(ui.speed.value||7);
   ui.speedShow.textContent=String(ui.speed.value||7);
@@ -297,11 +322,11 @@ ui.pause.onclick=function(){
   ui.pause.textContent=paused?"Fortsett":"Pause";
 };
 ui.speed.addEventListener('input', function(){
-  ui.speedShow.textContent=String(ui.speed.value);
+  ui.speedShow.textContent=String(ui.speed.value||7);
   speedMs=1000/Number(ui.speed.value||7);
 });
 
-/* ===== Boot ===== */
+/* Boot */
 fit(); draw();
 </script>
 </body>
