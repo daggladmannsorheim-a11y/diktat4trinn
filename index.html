@@ -3,8 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="screen-orientation" content="landscape">
-<title>Snake – Gloser uke 45 (Kampen 6. trinn)</title>
+<title>Snake – Gloser uke 45 • 6A Kampen skole</title>
 <style>
 :root{
   --bg:#0c1020;--panel:#151a2b;--ink:#eef3fb;--muted:#9fb1d1;
@@ -49,13 +48,11 @@ th{background:#1a2240}
 </head>
 <body>
 <header>
-  <h1>Snake – Gloser • Uke 45</h1>
-  <div class="muted">Spis 🍎 for spørsmål. Svar riktig for å vokse – fungerer på mobil og PC!</div>
+  <h1>Snake – Gloser uke 45 • 6A Kampen skole</h1>
 </header>
 
 <div class="wrap" id="canvasWrap"><canvas id="game" width="720" height="480"></canvas></div>
 
-<!-- Mobil piltaster -->
 <div id="mobControls">
   <div class="row"><button id="up">⬆️</button></div>
   <div class="row">
@@ -65,7 +62,6 @@ th{background:#1a2240}
   </div>
 </div>
 
-<!-- Info -->
 <div id="ui">
   <span class="chip">Poeng: <b id="score">0</b></span>
   <span class="chip">Liv: <b id="lives">❤❤❤</b></span>
@@ -76,13 +72,11 @@ th{background:#1a2240}
   <label class="pill">Fart <input id="speed" type="range" min="4" max="16" value="7"></label>
 </div>
 
-<!-- Fasit under -->
 <div id="fasitWrap" class="wrap">
   <button id="toggleFasit" class="btn-prim">Vis fasit ▼</button>
   <div id="fasit" style="display:none"></div>
 </div>
 
-<!-- Modal -->
 <div id="modal">
   <div id="card">
     <p>Skriv engelsk for: <span id="norw" class="good"></span></p>
@@ -97,7 +91,6 @@ th{background:#1a2240}
 </div>
 
 <script>
-/* --- Gloser --- */
 const PAIRS=[
  {en:"Decent",no:"ordentlig"},
  {en:"Grin",no:"smil"},
@@ -111,7 +104,6 @@ const PAIRS=[
  {en:"Knickers",no:"underbukser"}
 ];
 
-/* --- Fasit-tabell under spillet --- */
 const f=document.getElementById("fasit");
 f.innerHTML=`<table><tr><th>Engelsk</th><th>Norsk</th></tr>${PAIRS.map(p=>`<tr><td>${p.en}</td><td>${p.no}</td></tr>`).join("")}</table>`;
 document.getElementById("toggleFasit").onclick=(e)=>{
@@ -120,7 +112,6 @@ document.getElementById("toggleFasit").onclick=(e)=>{
  e.target.textContent=open?"Skjul fasit ▲":"Vis fasit ▼";
 };
 
-/* --- DOM --- */
 const cv=document.getElementById('game'),ctx=cv.getContext('2d');
 const ui={score:document.getElementById('score'),lives:document.getElementById('lives'),
   best:document.getElementById('best'),speed:document.getElementById('speed'),
@@ -133,147 +124,110 @@ hint=document.getElementById('hint');
 const LS_KEY="snake45_best";
 ui.best.textContent=localStorage.getItem(LS_KEY)||0;
 
-/* --- Canvas --- */
 let grid=24,cols=Math.floor(cv.width/grid),rows=Math.floor(cv.height/grid);
-function fit(){
-  const r=cv.getBoundingClientRect(),ratio=window.devicePixelRatio||1;
-  const w=Math.floor(r.width*ratio),h=Math.floor(w*2/3);
-  if(cv.width!==w||cv.height!==h){cv.width=w;cv.height=h;cols=Math.floor(w/grid);rows=Math.floor(h/grid);}
-}
+function fit(){const r=cv.getBoundingClientRect(),ratio=window.devicePixelRatio||1;
+ const w=Math.floor(r.width*ratio),h=Math.floor(w*2/3);
+ if(cv.width!==w||cv.height!==h){cv.width=w;cv.height=h;cols=Math.floor(w/grid);rows=Math.floor(h/grid);}}
 window.addEventListener('resize',fit);
 
-/* --- Utils --- */
 const rand=n=>Math.floor(Math.random()*n);
 const norm=s=>s.trim().toLowerCase().replace(/\s+/g," ");
 function flash(msg,ok=true,t=900){
-  const e=document.createElement('div');e.textContent=msg;
-  e.style.position="fixed";e.style.left="50%";e.style.top="12px";e.style.transform="translateX(-50%)";
-  e.style.background=ok?"#1f503a":"#5b2230";e.style.color="#fff";
-  e.style.padding="10px 14px";e.style.borderRadius="10px";
-  e.style.border="1px solid rgba(255,255,255,.15)";e.style.zIndex=99;
-  document.body.appendChild(e);setTimeout(()=>e.remove(),t);
+ const e=document.createElement('div');e.textContent=msg;
+ e.style.position="fixed";e.style.left="50%";e.style.top="12px";e.style.transform="translateX(-50%)";
+ e.style.background=ok?"#1f503a":"#5b2230";e.style.color="#fff";
+ e.style.padding="10px 14px";e.style.borderRadius="10px";e.style.zIndex=99;
+ document.body.appendChild(e);setTimeout(()=>e.remove(),t);
 }
 
-/* --- Spilltilstand --- */
 let snake,dir,nextDir,apple,score,lives,paused=true,loopId=null,lastTick=0,speedMs=1000/7;
 let growth=0,current=null,usedHint=false;
 
-/* --- Start/reset --- */
 function freeCell(){let x,y;do{x=rand(cols);y=rand(rows);}while(snake.some(s=>s.x===x&&s.y===y));return{x,y};}
 function placeApple(){apple=freeCell();}
 function reset(){
-  fit();snake=[{x:Math.floor(cols/2),y:Math.floor(rows/2)}];
-  dir={x:1,y:0};nextDir={x:1,y:0};score=0;lives=3;growth=0;
-  ui.score.textContent=score;ui.lives.textContent="❤❤❤";
-  placeApple();paused=false;cancelAnimationFrame(loopId);draw();loopId=requestAnimationFrame(tick);
+ fit();snake=[{x:Math.floor(cols/2),y:Math.floor(rows/2)}];
+ dir={x:1,y:0};nextDir={x:1,y:0};score=0;lives=3;growth=0;
+ ui.score.textContent=score;ui.lives.textContent="❤❤❤";
+ placeApple();paused=false;cancelAnimationFrame(loopId);draw();loopId=requestAnimationFrame(tick);
 }
 
-/* --- Tegning --- */
 function draw(){
-  ctx.fillStyle="#0a1020";ctx.fillRect(0,0,cv.width,cv.height);
-  ctx.strokeStyle="rgba(34,48,89,.6)";
-  for(let i=0;i<=cols;i++){ctx.beginPath();ctx.moveTo(i*grid,0);ctx.lineTo(i*grid,cv.height);ctx.stroke();}
-  for(let j=0;j<=rows;j++){ctx.beginPath();ctx.moveTo(0,j*grid);ctx.lineTo(cv.width,j*grid);ctx.stroke();}
-  if(apple){ctx.font="bold 14px system-ui";ctx.textAlign="center";ctx.textBaseline="middle";
-    ctx.fillText("🍎",apple.x*grid+grid/2,apple.y*grid+grid/2);}
-  ctx.fillStyle="#79c8ff";
-  snake.forEach((s,i)=>{
-    const x=s.x*grid,y=s.y*grid;
-    ctx.fillRect(x+2,y+2,grid-4,grid-4);
-    if(i===0){ctx.fillStyle="#0b1020";ctx.fillRect(x+6,y+8,3,3);
-      ctx.fillRect(x+grid-9,y+8,3,3);ctx.fillStyle="#79c8ff";}
-  });
+ ctx.fillStyle="#0a1020";ctx.fillRect(0,0,cv.width,cv.height);
+ ctx.strokeStyle="rgba(34,48,89,.6)";
+ for(let i=0;i<=cols;i++){ctx.beginPath();ctx.moveTo(i*grid,0);ctx.lineTo(i*grid,cv.height);ctx.stroke();}
+ for(let j=0;j<=rows;j++){ctx.beginPath();ctx.moveTo(0,j*grid);ctx.lineTo(cv.width,j*grid);ctx.stroke();}
+ if(apple){ctx.font="bold 14px system-ui";ctx.textAlign="center";ctx.textBaseline="middle";
+ ctx.fillText("🍎",apple.x*grid+grid/2,apple.y*grid+grid/2);}
+ ctx.fillStyle="#79c8ff";
+ snake.forEach((s,i)=>{
+   const x=s.x*grid,y=s.y*grid;
+   ctx.fillRect(x+2,y+2,grid-4,grid-4);
+   if(i===0){ctx.fillStyle="#0b1020";ctx.fillRect(x+6,y+8,3,3);ctx.fillRect(x+grid-9,y+8,3,3);ctx.fillStyle="#79c8ff";}
+ });
 }
 
-/* --- Spill-loop --- */
 function tick(ts){
-  fit();
-  if(paused){draw();loopId=requestAnimationFrame(tick);return;}
-  if(ts-lastTick<speedMs){loopId=requestAnimationFrame(tick);return;}
-  lastTick=ts;
-  if(nextDir.x!==-dir.x||nextDir.y!==-dir.y)dir=nextDir;
-  const head={...snake[0]};head.x+=dir.x;head.y+=dir.y;
-  if(head.x<0)head.x=cols-1;else if(head.x>=cols)head.x=0;
-  if(head.y<0)head.y=rows-1;else if(head.y>=rows)head.y=0;
-  if(snake.some(p=>p.x===head.x&&p.y===head.y)){loseLife("Halen");return loopId=requestAnimationFrame(tick);}
-  snake.unshift(head);
-  if(apple&&head.x===apple.x&&head.y===apple.y){paused=true;askQuestion();}
-  else{if(growth>0)growth--;else snake.pop();}
-  draw();loopId=requestAnimationFrame(tick);
+ fit();
+ if(paused){draw();loopId=requestAnimationFrame(tick);return;}
+ if(ts-lastTick<speedMs){loopId=requestAnimationFrame(tick);return;}
+ lastTick=ts;
+ if(nextDir.x!==-dir.x||nextDir.y!==-dir.y)dir=nextDir;
+ const head={...snake[0]};head.x+=dir.x;head.y+=dir.y;
+ if(head.x<0)head.x=cols-1;else if(head.x>=cols)head.x=0;
+ if(head.y<0)head.y=rows-1;else if(head.y>=rows)head.y=0;
+ if(snake.some(p=>p.x===head.x&&p.y===head.y)){loseLife("Halen");return loopId=requestAnimationFrame(tick);}
+ snake.unshift(head);
+ if(apple&&head.x===apple.x&&head.y===apple.y){paused=true;ask();}
+ else{if(growth>0)growth--;else snake.pop();}
+ draw();loopId=requestAnimationFrame(tick);
 }
 
-/* --- Spørsmål --- */
 function pick(){return PAIRS[rand(PAIRS.length)];}
-function askQuestion(){
-  current=pick();usedHint=false;
-  norw.textContent=current.no;ans.value="";hint.style.display="none";
-  modal.style.display="flex";ans.focus();
+function ask(){current=pick();usedHint=false;norw.textContent=current.no;ans.value="";hint.style.display="none";modal.style.display="flex";ans.focus();}
+function handle(ok){
+ modal.style.display="none";
+ const pts=usedHint?5:10;
+ if(ok){score+=pts;ui.score.textContent=score;growth+=2;
+  speedMs=Math.max(1000/16,speedMs*0.985);
+  flash(`Riktig +${pts}`,true);}
+ else loseLife("Feil");
+ placeApple();paused=false;
 }
-function handleAnswer(ok){
-  modal.style.display="none";
-  const pts=usedHint?5:10;
-  if(ok){score+=pts;ui.score.textContent=score;growth+=2;
-    speedMs=Math.max(1000/16,speedMs*0.985);
-    flash(ok?`Riktig +${pts}`:"",true);}
-  else loseLife("Feil svar");
-  placeApple();paused=false;
-}
-function check(){if(!current)return;handleAnswer(norm(ans.value)===norm(current.en));}
+function check(){if(!current)return;handle(norm(ans.value)===norm(current.en));}
 checkBtn.onclick=check;
 ans.addEventListener("keydown",e=>{if(e.key==="Enter")check();});
+showHint.onclick=()=>{usedHint=true;hint.style.display="block";hint.textContent=`Fasit: ${current.en} (5 poeng)`;}
 skipBtn.onclick=()=>{modal.style.display="none";loseLife("Hoppet over");placeApple();paused=false;};
-showHint.onclick=()=>{
-  usedHint=true;
-  hint.style.display="block";
-  hint.textContent=`Fasit: ${current.en} (halv poeng)`;
-};
 
-/* --- Liv --- */
 function loseLife(r){
-  lives--;
-  ui.lives.textContent="❤".repeat(Math.max(lives,0));
-  flash(`${r}! – 1 liv`,false,1000);
-  if(lives<=0)return gameOver();
-  snake=[{x:Math.floor(cols/2),y:Math.floor(rows/2)}];
-  dir={x:1,y:0};nextDir={x:1,y:0};growth=0;
+ lives--;ui.lives.textContent="❤".repeat(Math.max(lives,0));flash(`${r}! – 1 liv`,false,1000);
+ if(lives<=0)return gameOver();
+ snake=[{x:Math.floor(cols/2),y:Math.floor(rows/2)}];dir={x:1,y:0};nextDir={x:1,y:0};growth=0;
 }
 function gameOver(){
-  paused=true;
-  const best=Number(localStorage.getItem(LS_KEY)||0);
-  if(score>best){localStorage.setItem(LS_KEY,String(score));ui.best.textContent=score;}
-  flash(`Game over – Poeng: ${score}`,false,1600);
+ paused=true;
+ const best=Number(localStorage.getItem(LS_KEY)||0);
+ if(score>best){localStorage.setItem(LS_KEY,String(score));ui.best.textContent=score;}
+ flash(`Game over – Poeng: ${score}`,false,1600);
 }
 
-/* --- Kontroller --- */
 function setDir(dx,dy){if(dx===-dir.x&&dy===-dir.y)return;nextDir={x:dx,y:dy};}
 window.addEventListener('keydown',e=>{
-  const k=e.key.toLowerCase();
-  if(["arrowup","w"].includes(k))setDir(0,-1);
-  else if(["arrowdown","s"].includes(k))setDir(0,1);
-  else if(["arrowleft","a"].includes(k))setDir(-1,0);
-  else if(["arrowright","d"].includes(k))setDir(1,0);
+ const k=e.key.toLowerCase();
+ if(["arrowup","w"].includes(k))setDir(0,-1);
+ else if(["arrowdown","s"].includes(k))setDir(0,1);
+ else if(["arrowleft","a"].includes(k))setDir(-1,0);
+ else if(["arrowright","d"].includes(k))setDir(1,0);
 });
 document.getElementById('up').onclick=()=>setDir(0,-1);
 document.getElementById('down').onclick=()=>setDir(0,1);
 document.getElementById('left').onclick=()=>setDir(-1,0);
 document.getElementById('right').onclick=()=>setDir(1,0);
 
-/* --- UI --- */
-ui.start.onclick=()=>{
-  speedMs=1000/Number(ui.speed.value);
-  ui.speedShow.textContent=ui.speed.value;
-  reset();
-};
-ui.pause.onclick=()=>{
-  paused=!paused;
-  ui.pause.textContent=paused?"Fortsett":"Pause";
-};
-ui.speed.addEventListener('input',()=>{
-  ui.speedShow.textContent=ui.speed.value;
-  speedMs=1000/Number(ui.speed.value);
-});
-
-/* --- Start --- */
+ui.start.onclick=()=>{speedMs=1000/Number(ui.speed.value);ui.speedShow.textContent=ui.speed.value;reset();};
+ui.pause.onclick=()=>{paused=!paused;ui.pause.textContent=paused?"Fortsett":"Pause";};
+ui.speed.addEventListener('input',()=>{ui.speedShow.textContent=ui.speed.value;speedMs=1000/Number(ui.speed.value);});
 fit();draw();
 </script>
 </body>
