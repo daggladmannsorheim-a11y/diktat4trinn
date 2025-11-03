@@ -23,8 +23,8 @@ canvas{display:block;width:100%;height:auto;background:#0a1020;border:1px solid 
 button{appearance:none;background:#1b274b;color:var(--ink);border:1px solid var(--line);padding:8px 12px;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer}
 button:active{transform:translateY(1px)}
 .btn-prim{background:#1b3b2e;border-color:#225a42}
-#modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:50}
-#card{width:min(92vw,420px);background:#0f1734;border:1px solid #2a3a68;border-radius:14px;padding:14px;box-shadow:0 10px 30px rgba(0,0,0,.35);text-align:center}
+#modal,#summary{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:50}
+.card{width:min(92vw,420px);background:#0f1734;border:1px solid #2a3a68;border-radius:14px;padding:14px;box-shadow:0 10px 30px rgba(0,0,0,.35);text-align:center}
 #ans{width:100%;padding:10px 12px;font-size:18px;border-radius:10px;border:1px solid #2a3a68;background:#101833;color:#fff}
 .row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;justify-content:center}
 .good{color:var(--good)}.bad{color:var(--bad)}
@@ -33,6 +33,10 @@ button:active{transform:translateY(1px)}
 table{width:100%;border-collapse:collapse;font-size:14px;margin-top:6px}
 th,td{border:1px solid #2a3a68;padding:6px 8px;text-align:left}
 th{background:#1a2240}
+.summary-list{margin:10px 0;text-align:left}
+.summary-list li{margin:4px 0}
+#mistakes{display:none;margin-top:10px;max-height:220px;overflow:auto;text-align:left}
+#mistakes table{font-size:13px}
 </style>
 </head>
 <body>
@@ -64,8 +68,9 @@ th{background:#1a2240}
   <div id="fasit" style="display:none"></div>
 </div>
 
+<!-- Spørsmål -->
 <div id="modal">
-  <div id="card">
+  <div class="card">
     <p>Skriv engelsk for: <span id="norw" class="good"></span></p>
     <input id="ans" type="text" autocomplete="off" autocapitalize="none" spellcheck="false">
     <div id="hint"></div>
@@ -74,6 +79,26 @@ th{background:#1a2240}
       <button id="showHint">Vis fasit</button>
       <button id="skip">Hopp over (–1 liv)</button>
     </div>
+  </div>
+</div>
+
+<!-- Oppsummering -->
+<div id="summary">
+  <div class="card">
+    <h3>Oppsummering</h3>
+    <ul class="summary-list">
+      <li><b>Riktige uten fasit:</b> <span id="sum_ok_nohint">0</span></li>
+      <li><b>Riktige med fasit:</b> <span id="sum_ok_hint">0</span></li>
+      <li><b>Feil uten fasit:</b> <span id="sum_bad_nohint">0</span></li>
+      <li><b>Feil med fasit:</b> <span id="sum_bad_hint">0</span></li>
+      <li><b>Poeng:</b> <span id="sum_pts">0</span></li>
+      <li><b>Tid:</b> <span id="sum_time">0:00</span></li>
+    </ul>
+    <div class="row">
+      <button id="toggleMistakes">Vis feilgloser ▼</button>
+      <button id="summaryClose" class="btn-prim">Spill igjen</button>
+    </div>
+    <div id="mistakes"></div>
   </div>
 </div>
 
@@ -104,6 +129,12 @@ var ui={score:document.getElementById('score'),lives:document.getElementById('li
 var modal=document.getElementById('modal'),norw=document.getElementById('norw'),ans=document.getElementById('ans'),
     checkBtn=document.getElementById('check'),skipBtn=document.getElementById('skip'),showHint=document.getElementById('showHint'),
     hint=document.getElementById('hint');
+var sumEl={ok_nohint:document.getElementById('sum_ok_nohint'),ok_hint:document.getElementById('sum_ok_hint'),
+           bad_nohint:document.getElementById('sum_bad_nohint'),bad_hint:document.getElementById('sum_bad_hint'),
+           pts:document.getElementById('sum_pts'),time:document.getElementById('sum_time')};
+var summary=document.getElementById('summary'), summaryClose=document.getElementById('summaryClose'),
+    toggleMistakesBtn=document.getElementById('toggleMistakes'), mistakesDiv=document.getElementById('mistakes');
+
 var LS_KEY="snake45_best";ui.best.textContent=lsGet(LS_KEY)||"0";
 
 /* Mindre spillflate */
@@ -112,7 +143,8 @@ var cols=Math.floor(cv.width/grid), rows=Math.floor(cv.height/grid);
 
 /* Stabil fit (låser til ~480×320) */
 function fit(){
-  var w=Math.min(480, Math.max(360, Math.floor(document.getElementById('canvasWrap').getBoundingClientRect().width-12)));
+  var wrap=document.getElementById('canvasWrap');
+  var w=Math.min(480, Math.max(360, Math.floor(wrap.getBoundingClientRect().width-12)));
   var h=Math.floor(w*2/3);
   if(cv.width!==w||cv.height!==h){cv.width=w;cv.height=h;cols=Math.floor(w/grid);rows=Math.floor(h/grid);}
 }
@@ -135,17 +167,37 @@ function flash(msg,ok,t){if(typeof t==="undefined")t=900;var e=document.createEl
 e.style.position="fixed";e.style.left="50%";e.style.top="12px";e.style.transform="translateX(-50%)";
 e.style.background=ok?"#1f503a":"#5b2230";e.style.color="#fff";e.style.padding="10px 14px";e.style.borderRadius="10px";e.style.zIndex=99;
 document.body.appendChild(e);setTimeout(function(){if(e&&e.parentNode)e.parentNode.removeChild(e);},t);}
+function fmtTime(ms){var s=Math.floor(ms/1000),m=Math.floor(s/60);s%=60;return m+":"+(s<10?"0"+s:s);}
 
-/* State */
+/* Runde/statistikk */
 var snake,dir,nextDir,apple,score,lives,paused=true,loopId=null,lastTick=0,speedMs=1000/7;
 var growth=0,current=null,usedHint=false;
+var remaining=[], stats=null, mistakes=[]; // mistakes = liste over feil
+
+function newStats(){
+  return {start:Date.now(), end:0,
+          ok_nohint:0, ok_hint:0, bad_nohint:0, bad_hint:0,
+          points:0};
+}
 
 /* Start/reset */
 function copy(pt){return{x:pt.x,y:pt.y};}
 function freeCell(){var x,y,i,clash;do{x=rand(cols);y=rand(rows);clash=false;for(i=0;i<snake.length;i++){if(snake[i].x===x&&snake[i].y===y){clash=true;break;}}}while(clash);return{x:x,y:y};}
 function placeApple(){apple=freeCell();}
-function reset(){fit();snake=[{x:Math.floor(cols/2),y:Math.floor(rows/2)}];dir={x:1,y:0};nextDir={x:1,y:0};score=0;lives=3;growth=0;
-ui.score.textContent=String(score);ui.lives.textContent=hearts(3);placeApple();paused=false;if(loopId)cancelAnimationFrame(loopId);draw();loopId=requestAnimationFrame(tick);cv.focus();}
+function reset(){
+  fit();
+  remaining=PAIRS.slice();
+  stats=newStats();
+  mistakes=[];
+
+  snake=[{x:Math.floor(cols/2),y:Math.floor(rows/2)}];
+  dir={x:1,y:0};nextDir={x:1,y:0};score=0;lives=3;growth=0;
+  ui.score.textContent=String(score);ui.lives.textContent=hearts(3);
+  placeApple();paused=false;
+  if(loopId)cancelAnimationFrame(loopId);
+  draw();loopId=requestAnimationFrame(tick);
+  cv.focus();
+}
 
 /* Draw */
 function draw(){
@@ -176,41 +228,122 @@ function tick(ts){
 
   snake.unshift(head);
 
-  if(apple&&head.x===apple.x&&head.y===apple.y){paused=true;ask();}
-  else{if(growth>0)growth--;else snake.pop();}
+  if(apple&&head.x===apple.x&&head.y===apple.y){
+    paused=true; ask();
+  }else{
+    if(growth>0)growth--;else snake.pop();
+  }
 
   draw();loopId=requestAnimationFrame(tick);
 }
 
 /* Spørsmål */
-function pick(){return PAIRS[rand(PAIRS.length)];}
-function ask(){current=pick();usedHint=false;norw.textContent=current.no;ans.value="";hint.style.display="none";modal.style.display="flex";
-setTimeout(function(){try{ans.focus();}catch(e){}},50);}
-function handle(ok){modal.style.display="none";try{cv.focus();}catch(e){};var pts=usedHint?5:10;
-if(ok){score+=pts;ui.score.textContent=String(score);growth+=2;speedMs=Math.max(1000/16,speedMs*0.985);flash("Riktig +"+pts,true);}
-else{loseLife("Feil");}placeApple();paused=false;}
-function check(){if(!current)return;handle(norm(ans.value)===norm(current.en));}
+var currentIdx=-1; // indeks i remaining
+var currentObj=null;
+function pick(){
+  if(remaining.length===0) return null;
+  var idx=rand(remaining.length);
+  currentIdx=idx;
+  return remaining[idx];
+}
+function ask(){
+  currentObj=pick();
+  if(!currentObj){ endRound(); return; }
+  usedHint=false; norw.textContent=currentObj.no; ans.value=""; hint.style.display="none";
+  modal.style.display="flex";
+  setTimeout(function(){try{ans.focus();}catch(e){}},50);
+}
+function registerMistake(userAns){
+  mistakes.push({en:currentObj.en,no:currentObj.no,usedHint:usedHint,answer:userAns||""});
+}
+function handle(ok){
+  var userAns=ans.value||"";
+  modal.style.display="none";
+  try{cv.focus();}catch(e){}
+  var pts=usedHint?5:10;
+  if(ok){
+    score+=pts; ui.score.textContent=String(score); growth+=2; speedMs=Math.max(1000/16,speedMs*0.985);
+    if(usedHint) stats.ok_hint++; else stats.ok_nohint++;
+    stats.points=score;
+    flash("Riktig +"+pts,true);
+  }else{
+    if(usedHint) stats.bad_hint++; else stats.bad_nohint++;
+    registerMistake(userAns);
+    loseLife("Feil");
+  }
+  if(currentIdx>-1 && remaining.length>0){ remaining.splice(currentIdx,1); currentIdx=-1; }
+
+  if(remaining.length===0){ endRound(); return; }
+
+  placeApple(); paused=false;
+}
+function check(){ if(!currentObj) return; handle(norm(ans.value)===norm(currentObj.en)); }
 document.getElementById('check').onclick=function(){check();};
 ans.addEventListener('keydown',function(e){
-  /* Viktig: la input få mellomrom og piltaster */
-  e.stopPropagation();
-  /* (valgfritt) hindrer blockScrollKeys når fokus er i input og space trykkes */
-  // if((e.key||e.code||"") === " ") e.stopPropagation();
+  e.stopPropagation(); // la input bruke mellomrom og piltaster
 });
-ans.addEventListener('keydown',function(e){if(e.key==="Enter"||e.keyCode===13)check();});
-document.getElementById('showHint').onclick=function(){usedHint=true;hint.style.display="block";hint.textContent="Fasit: "+current.en+" (5 poeng)";};
-document.getElementById('skip').onclick=function(){modal.style.display="none";try{cv.focus();}catch(e){};loseLife("Hoppet over");placeApple();paused=false;};
+ans.addEventListener('keydown',function(e){ if(e.key==="Enter"||e.keyCode===13) check(); });
+document.getElementById('showHint').onclick=function(){ usedHint=true; hint.style.display="block"; hint.textContent="Fasit: "+currentObj.en+" (5 poeng)"; };
+document.getElementById('skip').onclick=function(){
+  modal.style.display="none"; try{cv.focus();}catch(e){}
+  stats.bad_nohint++; registerMistake("(hoppet over)");
+  loseLife("Hoppet over");
+  if(currentIdx>-1 && remaining.length>0){ remaining.splice(currentIdx,1); currentIdx=-1; }
+  if(remaining.length===0){ endRound(); return; }
+  placeApple(); paused=false;
+};
 
 /* Liv */
-function loseLife(r){lives--;ui.lives.textContent=hearts(Math.max(lives,0));flash(r+"! – 1 liv",false,1000);
-if(lives<=0){return gameOver();}snake=[{x:Math.floor(cols/2),y:Math.floor(rows/2)}];dir={x:1,y:0};nextDir={x:1,y:0};growth=0;}
-function gameOver(){paused=true;var best=parseInt(lsGet(LS_KEY)||"0",10)||0;if(score>best){lsSet(LS_KEY,String(score));ui.best.textContent=String(score);}flash("Game over – Poeng: "+score,false,1600);}
+function loseLife(r){
+  lives--; ui.lives.textContent=hearts(Math.max(lives,0)); flash(r+"! – 1 liv", false, 1000);
+  if(lives<=0){ endRound(true); return; }
+  snake=[{x:Math.floor(cols/2),y:Math.floor(rows/2)}]; dir={x:1,y:0}; nextDir={x:1,y:0}; growth=0;
+}
+function buildMistakesTable(){
+  if(!mistakes.length){
+    mistakesDiv.innerHTML="<p class='good'>Ingen feil – bra jobba!</p>";
+    return;
+  }
+  var html="<table><tr><th>Engelsk (fasit)</th><th>Norsk</th><th>Ditt svar</th><th>Hint?</th></tr>";
+  for(var i=0;i<mistakes.length;i++){
+    var m=mistakes[i];
+    html+="<tr><td>"+m.en+"</td><td>"+m.no+"</td><td>"+(m.answer?m.answer:"")+"</td><td>"+(m.usedHint?"Ja":"Nei")+"</td></tr>";
+  }
+  html+="</table>";
+  mistakesDiv.innerHTML=html;
+}
+function endRound(){
+  paused=true;
+  stats.end=Date.now();
+  var best=parseInt(lsGet(LS_KEY)||"0",10)||0;
+  if(score>best){ lsSet(LS_KEY,String(score)); ui.best.textContent=String(score); }
+  sumEl.ok_nohint.textContent=String(stats.ok_nohint);
+  sumEl.ok_hint.textContent=String(stats.ok_hint);
+  sumEl.bad_nohint.textContent=String(stats.bad_nohint);
+  sumEl.bad_hint.textContent=String(stats.bad_hint);
+  sumEl.pts.textContent=String(score);
+  sumEl.time.textContent=fmtTime(stats.end - stats.start);
+  buildMistakesTable();
+  mistakesDiv.style.display="none";
+  toggleMistakesBtn.textContent="Vis feilgloser ▼";
+  summary.style.display="flex";
+}
+summaryClose.onclick=function(){ summary.style.display="none"; reset(); };
+toggleMistakesBtn.onclick=function(){
+  var show=mistakesDiv.style.display==="none";
+  mistakesDiv.style.display=show?"block":"none";
+  toggleMistakesBtn.textContent=show?"Skjul feilgloser ▲":"Vis feilgloser ▼";
+};
 
 /* Kontroller */
-function setDir(dx,dy){if(dx===-dir.x&&dy===-dir.y)return;nextDir={x:dx,y:dy};}
-window.addEventListener('keydown',function(e){var k=(e.key||e.code||"").toLowerCase();
-if(k==="arrowup"||k==="w")setDir(0,-1);else if(k==="arrowdown"||k==="s")setDir(0,1);
-else if(k==="arrowleft"||k==="a")setDir(-1,0);else if(k==="arrowright"||k==="d")setDir(1,0);});
+function setDir(dx,dy){ if(dx===-dir.x&&dy===-dir.y) return; nextDir={x:dx,y:dy}; }
+window.addEventListener('keydown',function(e){
+  var k=(e.key||e.code||"").toLowerCase();
+  if(k==="arrowup"||k==="w") setDir(0,-1);
+  else if(k==="arrowdown"||k==="s") setDir(0,1);
+  else if(k==="arrowleft"||k==="a") setDir(-1,0);
+  else if(k==="arrowright"||k==="d") setDir(1,0);
+});
 document.getElementById('up').onclick=function(){setDir(0,-1);};
 document.getElementById('down').onclick=function(){setDir(0,1);};
 document.getElementById('left').onclick=function(){setDir(-1,0);};
@@ -221,7 +354,7 @@ ui.start.onclick=function(){speedMs=1000/Number(ui.speed.value||7);ui.speedShow.
 ui.pause.onclick=function(){paused=!paused;ui.pause.textContent=paused?"Fortsett":"Pause";};
 ui.speed.addEventListener('input',function(){ui.speedShow.textContent=String(ui.speed.value||7);speedMs=1000/Number(ui.speed.value||7);});
 
-/* Boot: autostart */
+/* Boot */
 fit();reset();
 </script>
 </body>
