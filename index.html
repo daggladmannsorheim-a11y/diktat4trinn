@@ -2,7 +2,7 @@
 <html lang="nb">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>Snake – Gloser uke 45 • 6A Kampen skole</title>
 <style>
 :root{
@@ -13,7 +13,7 @@
 html,body{margin:0;height:100%;background:#0c1020;color:var(--ink);
   font:16px system-ui,Segoe UI,Roboto,Arial;overflow:hidden}
 header{text-align:center;background:#151a2b;border-bottom:1px solid var(--line);padding:8px 14px}
-h1{margin:0;font-size:18px}.muted{color:var(--muted);font-size:14px}
+h1{margin:0;font-size:18px}
 .wrap{max-width:960px;margin:auto;padding:6px}
 #canvasWrap{background:radial-gradient(1000px 480px at 30% -8%,#18234a,#0c1020 60%);
   border:1px solid var(--line);border-radius:12px;padding:6px;margin:auto}
@@ -47,9 +47,7 @@ th{background:#1a2240}
 </style>
 </head>
 <body>
-<header>
-  <h1>Snake – Gloser uke 45 • 6A Kampen skole</h1>
-</header>
+<header><h1>Snake – Gloser uke 45 • 6A Kampen skole</h1></header>
 
 <div class="wrap" id="canvasWrap"><canvas id="game" width="720" height="480"></canvas></div>
 
@@ -113,21 +111,30 @@ document.getElementById("toggleFasit").onclick=(e)=>{
 };
 
 const cv=document.getElementById('game'),ctx=cv.getContext('2d');
-const ui={score:document.getElementById('score'),lives:document.getElementById('lives'),
-  best:document.getElementById('best'),speed:document.getElementById('speed'),
-  speedShow:document.getElementById('speedShow'),start:document.getElementById('start'),
-  pause:document.getElementById('pause')};
+const ui={score:score=lives=best=speed=speedShow=start=pause=null};
+ui.score=document.getElementById('score');
+ui.lives=document.getElementById('lives');
+ui.best=document.getElementById('best');
+ui.speed=document.getElementById('speed');
+ui.speedShow=document.getElementById('speedShow');
+ui.start=document.getElementById('start');
+ui.pause=document.getElementById('pause');
+
 const modal=document.getElementById('modal'),norw=document.getElementById('norw'),
 ans=document.getElementById('ans'),checkBtn=document.getElementById('check'),
 skipBtn=document.getElementById('skip'),showHint=document.getElementById('showHint'),
 hint=document.getElementById('hint');
+
 const LS_KEY="snake45_best";
 ui.best.textContent=localStorage.getItem(LS_KEY)||0;
 
 let grid=24,cols=Math.floor(cv.width/grid),rows=Math.floor(cv.height/grid);
-function fit(){const r=cv.getBoundingClientRect(),ratio=window.devicePixelRatio||1;
- const w=Math.floor(r.width*ratio),h=Math.floor(w*2/3);
- if(cv.width!==w||cv.height!==h){cv.width=w;cv.height=h;cols=Math.floor(w/grid);rows=Math.floor(h/grid);}}
+function fit(){
+ const r=cv.parentElement.getBoundingClientRect();
+ const w=Math.floor(r.width),h=Math.floor(w*2/3);
+ cv.width=w;cv.height=h;
+ cols=Math.floor(w/grid);rows=Math.floor(h/grid);
+}
 window.addEventListener('resize',fit);
 
 const rand=n=>Math.floor(Math.random()*n);
@@ -157,7 +164,7 @@ function draw(){
  ctx.strokeStyle="rgba(34,48,89,.6)";
  for(let i=0;i<=cols;i++){ctx.beginPath();ctx.moveTo(i*grid,0);ctx.lineTo(i*grid,cv.height);ctx.stroke();}
  for(let j=0;j<=rows;j++){ctx.beginPath();ctx.moveTo(0,j*grid);ctx.lineTo(cv.width,j*grid);ctx.stroke();}
- if(apple){ctx.font="bold 14px system-ui";ctx.textAlign="center";ctx.textBaseline="middle";
+ if(apple){ctx.font="bold 16px system-ui";ctx.textAlign="center";ctx.textBaseline="middle";
  ctx.fillText("🍎",apple.x*grid+grid/2,apple.y*grid+grid/2);}
  ctx.fillStyle="#79c8ff";
  snake.forEach((s,i)=>{
@@ -184,13 +191,16 @@ function tick(ts){
 }
 
 function pick(){return PAIRS[rand(PAIRS.length)];}
-function ask(){current=pick();usedHint=false;norw.textContent=current.no;ans.value="";hint.style.display="none";modal.style.display="flex";ans.focus();}
+function ask(){
+ current=pick();usedHint=false;
+ norw.textContent=current.no;ans.value="";hint.style.display="none";
+ modal.style.display="flex";setTimeout(()=>ans.focus(),100);
+}
 function handle(ok){
- modal.style.display="none";
+ modal.style.display="none";cv.focus();
  const pts=usedHint?5:10;
  if(ok){score+=pts;ui.score.textContent=score;growth+=2;
-  speedMs=Math.max(1000/16,speedMs*0.985);
-  flash(`Riktig +${pts}`,true);}
+  speedMs=Math.max(1000/16,speedMs*0.985);flash(`Riktig +${pts}`,true);}
  else loseLife("Feil");
  placeApple();paused=false;
 }
@@ -198,7 +208,7 @@ function check(){if(!current)return;handle(norm(ans.value)===norm(current.en));}
 checkBtn.onclick=check;
 ans.addEventListener("keydown",e=>{if(e.key==="Enter")check();});
 showHint.onclick=()=>{usedHint=true;hint.style.display="block";hint.textContent=`Fasit: ${current.en} (5 poeng)`;}
-skipBtn.onclick=()=>{modal.style.display="none";loseLife("Hoppet over");placeApple();paused=false;};
+skipBtn.onclick=()=>{modal.style.display="none";cv.focus();loseLife("Hoppet over");placeApple();paused=false;};
 
 function loseLife(r){
  lives--;ui.lives.textContent="❤".repeat(Math.max(lives,0));flash(`${r}! – 1 liv`,false,1000);
